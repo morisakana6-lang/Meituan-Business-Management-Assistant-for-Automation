@@ -144,3 +144,66 @@ API 返回的数值可能包含逗号（如 `"146,504"`），必须先 `.replace
 ## 依赖
 
 Python 3.8+, requests, playwright, playwright-stealth, openpyxl
+
+## Git / GitHub 操作规范
+
+### Git 初始化与远程仓库连接
+
+新项目首次上传 GitHub 步骤：
+
+```bash
+# 1. 初始化 git 仓库
+git init
+
+# 2. 添加 remote（使用 token 认证）
+git remote add origin https://github.com/[username]/[repo].git
+
+# 3. 设置 remote URL 包含 token（方便后续 push）
+git remote set-url origin https://[token]@github.com/[username]/[repo].git
+```
+
+### 创建 .gitignore
+
+新项目必须创建 `.gitignore`，排除以下内容：
+- `auth/` 目录（凭证文件）
+- `*.json`（凭证和配置）
+- `__pycache__/`（Python 缓存）
+- `*.pyc`（编译文件）
+- `.playwright-mcp/`（Playwright 缓存）
+- `reports/`、`*.xlsx`、`*.zip`（报表和压缩包）
+- `.DS_Store`、`*.log`（系统文件）
+
+### 提交与推送
+
+```bash
+# 添加所有文件
+git add -A
+
+# 提交（首次提交）
+git commit -m "Initial commit: [项目名称]"
+
+# 推送并设置上游分支
+git push -u origin [branch]
+```
+
+### 分支管理
+
+- GitHub 新仓库默认分支为 `main`，优先使用 `main` 作为主分支
+- 本地分支名应与远程保持一致
+- 如需重命名分支：
+  ```bash
+  git branch -m old_name new_name
+  ```
+
+### GitHub 认证方式
+
+**Personal Access Token（推荐）**：
+1. GitHub → Settings → Developer settings → Personal access tokens → Tokens (classic)
+2. 生成新 token，勾选 `repo` 权限
+3. 将 token 嵌入 remote URL：`https://[token]@github.com/...`
+
+### 禁止操作
+
+- 严禁将 `auth/` 目录推送到远程仓库
+- 严禁在 commit 中包含凭证文件
+- 严禁 push --force 到 main/master 主分支（除非有充分理由并告知用户）
