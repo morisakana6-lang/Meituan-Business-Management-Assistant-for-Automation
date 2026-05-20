@@ -116,6 +116,28 @@ class ExcelGenerator:
         # 设置第2行行高
         self.ws.row_dimensions[2].height = 22
 
+    def _get_widths(self):
+        """获取列宽列表"""
+        return [21.125, 28.875, 25.375, 10.0, 13.0, 13.0, 14.0, 10.0, 14.0, 10.0, 13.0, 13.0, 13.0]
+
+    def _get_headers(self):
+        """获取表头列表"""
+        return [
+            "门店ID",           # A
+            "推广门店",         # B
+            "时间",             # C
+            "曝光人数",         # D - 简版看板
+            "访问人数",         # E
+            "下单券数",         # F
+            "下单金额(原价)",   # G
+            "核销券数",         # H
+            "核销金额(原价)",   # I
+            "曝光次数",         # J - 流量数据
+            "曝光人数",         # K
+            "访问次数",         # L
+            "访问人数",         # M
+        ]
+
     def _format_value(self, value: str) -> str:
         """格式化数值，移除逗号"""
         if isinstance(value, str):
