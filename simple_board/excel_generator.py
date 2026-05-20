@@ -64,12 +64,12 @@ class ExcelGenerator:
         self.ws = self.wb.active
         self.ws.title = "简版看板报表"
 
-    def _create_title_row(self):
+    def _create_title_row(self, title: str = None):
         """创建标题行（第1行）"""
         # 简版看板分组标题 (A1:I1) - 包含门店ID、推广门店、时间
         self.ws.merge_cells("A1:I1")
         title_cell = self.ws["A1"]
-        title_cell.value = "简版看板"
+        title_cell.value = title if title else "简版看板"
         title_cell.font = TITLE_FONT
         title_cell.fill = TITLE_FILL  # 绿色
         title_cell.alignment = CENTER_ALIGN
@@ -188,59 +188,95 @@ class ExcelGenerator:
 
 def generate_report(
     client,
+    shop_ids: list,
     begin_date: str,
     end_date: str,
-    shop_id: str,
-    shop_name: str = "",
     platform: int = 0
 ) -> str:
     """
-    生成简版看板报表
+    生成简版看板报表（支持单门店和多门店）
 
     Args:
         client: SimpleBoardClient 实例
+        shop_ids: 门店ID列表，支持单个或多个门店
         begin_date: 开始日期，格式 YYYY-MM-DD
         end_date: 结束日期，格式 YYYY-MM-DD
-        shop_id: 门店ID
-        shop_name: 门店名称
-        platform: 平台选择，0=点评（默认），1=美团
+        platform: 平台选择，0=全平台，1=点评，2=美团
 
     Returns:
         生成的 Excel 文件路径
     """
+    # 加载门店映射表
+    from tuiguangtong.shop_search import load_mapping
+    mapping_data = load_mapping()
+    shops = mapping_data.get("shops", [])
+
+    def get_shop_name(shop_id: str) -> str:
+        if shop_id == "0":
+            return "全部门店汇总数据"
+        for shop in shops:
+            for id_info in shop.get("ids", []):
+                if id_info.get("id") == shop_id:
+                    return shop.get("name", f"门店{shop_id}")
+        return f"门店{shop_id}"
+
     generator = ExcelGenerator()
-    generator._create_title_row()
+
+    # 判断单门店还是多门店
+    is_multi_shop = len(shop_ids) > 1
+    if is_multi_shop:
+        generator._create_title_row("简版看板报表（多门店）")
+    else:
+        generator._create_title_row()
+
     generator._create_header_row()
 
     # 日期范围
     date_str = f"{begin_date}至{end_date}"
-
     print(f"开始生成简版看板报表: {begin_date} ~ {end_date}")
 
-    try:
-        metrics = client.get_metrics(
-            begin_date=begin_date,
-            end_date=end_date,
-            shop_id=shop_id,
-            platform=str(platform)
-        )
+    # 遍历每个门店查询数据
+    for shop_id in shop_ids:
+        shop_name = get_shop_name(shop_id)
+        print(f"  查询门店: {shop_name}...")
 
-        generator.add_data_row(shop_id, shop_name, date_str, metrics)
+        try:
+            metrics = client.get_metrics(
+                begin_date=begin_date,
+                end_date=end_date,
+                shop_id=shop_id,
+                platform=str(platform)
+            )
+            generator.add_data_row(shop_id, shop_name, date_str, metrics)
+            print(f"    {shop_name}: 获取成功")
+        except Exception as e:
+            print(f"    {shop_name}: 获取失败 - {e}")
+            generator.add_data_row(shop_id, shop_name, date_str, {})
 
-        # 保存文件
-        output_file = f"simple_board/reports/简版看板_{shop_id}_{begin_date}_{end_date}.xlsx"
-        os.makedirs(os.path.dirname(output_file), exist_ok=True)
-        generator.save(output_file)
+    # 保存文件
+    output_dir = os.path.join(_CURRENT_DIR, "reports")
+    os.makedirs(output_dir, exist_ok=True)
 
-        return output_file
+    if is_multi_shop:
+        output_file = f"{output_dir}/简版看板_多门店_{begin_date}_{end_date}.xlsx"
+    else:
+        output_file = f"{output_dir}/简版看板_{shop_ids[0]}_{begin_date}_{end_date}.xlsx"
 
-    except Exception as e:
-        print(f"生成报表失败: {e}")
-        raise
+    generator.save(output_file)
+    return output_file
 
 
 if __name__ == "__main__":
-    """生成简版看板报表"""
+    """
+    入口：直接运行 python excel_generator.py 即可生成报表
+
+    使用方法：
+        1. 修改 shop_config.json 中的 search_key（门店ID或名称）和日期
+        2. 运行 python excel_generator.py
+
+    search_key: 可以是单个门店ID、多个门店ID列表（JSON数组格式）或逗号分隔字符串
+    platform: 0=全平台（默认），1=点评，2=美团
+    """
     import json
     from client import SimpleBoardClient
 
@@ -258,58 +294,52 @@ if __name__ == "__main__":
     platform = config.get("platform", 0)
     date_range = config["日期范围"]
 
-    # 判断输入是ID还是名称
-    if str(search_key) == "0":
-        shop_id = "0"
-        shop_name = "全部门店汇总数据"
-    elif is_shop_id(str(search_key)):
-        # 如果是ID，直接使用
-        matches = search_by_id(str(search_key))
-        if matches:
-            shop_name = matches[0]["name"]
-            shop_id = str(search_key)
+    # 解析 search_key（支持多种格式）
+    if isinstance(search_key, list):
+        shop_ids = search_key
+    elif isinstance(search_key, str):
+        if "," in search_key:
+            shop_ids = [s.strip() for s in search_key.split(",")]
         else:
-            shop_name = f"门店ID:{search_key}"
-            shop_id = str(search_key)
+            shop_ids = [search_key]
     else:
-        # 如果是名称，使用resolve_shop解析
-        shop_name, shop_id = resolve_shop(str(search_key), platform)
+        shop_ids = [str(search_key)]
 
-    print(f"简版看板报表生成")
-    print(f"门店: {shop_name}")
-    print(f"门店ID: {shop_id}")
-    print(f"平台: {'点评' if platform == 0 else '美团'}")
-    print(f"日期范围: {date_range['begin']} ~ {date_range['end']}")
+    # 获取门店信息
+    if len(shop_ids) == 1:
+        if shop_ids[0] == "0":
+            shop_name = "全部门店汇总数据"
+        elif is_shop_id(str(shop_ids[0])):
+            matches = search_by_id(str(shop_ids[0]))
+            if matches:
+                shop_name = matches[0]["name"]
+            else:
+                shop_name = f"门店ID:{shop_ids[0]}"
+        else:
+            shop_name, _ = resolve_shop(str(shop_ids[0]), platform)
+        print(f"已选择门店: {shop_name}")
+    else:
+        first_key = shop_ids[0]
+        if is_shop_id(str(first_key)):
+            matches = search_by_id(str(first_key))
+            if matches:
+                shop_name = matches[0]["name"]
+            else:
+                shop_name = f"门店ID:{first_key}"
+        else:
+            shop_name, _ = resolve_shop(str(first_key), platform)
+        print(f"已选择门店数量: {len(shop_ids)}")
+
+    platform_names = {0: "全平台", 1: "点评", 2: "美团"}
+    print(f"平台: {platform_names.get(platform, '全平台')}")
     print()
 
     client = SimpleBoardClient()
 
-    # 查询数据
-    metrics = client.get_metrics(
+    generate_report(
+        client=client,
+        shop_ids=shop_ids,
         begin_date=date_range["begin"],
         end_date=date_range["end"],
-        shop_id=shop_id,
-        platform=str(platform)
+        platform=platform
     )
-
-    # 打印获取到的数据
-    print("获取到的指标:")
-    print(f"  概览数据: {metrics.get('overview')}")
-    print(f"  交易数据: {metrics.get('trade')}")
-    print(f"  流量数据: {metrics.get('flow')}")
-    print()
-
-    # 生成报表
-    generator = ExcelGenerator()
-    generator._create_title_row()
-    generator._create_header_row()
-
-    # 日期范围
-    date_str = f"{date_range['begin']}至{date_range['end']}"
-
-    generator.add_data_row(shop_id, shop_name, date_str, metrics)
-
-    output_file = f"simple_board/reports/简版看板_{shop_id}_{date_range['begin']}_{date_range['end']}.xlsx"
-    os.makedirs(os.path.dirname(output_file), exist_ok=True)
-    generator.save(output_file)
-    print(f"生成文件: {output_file}")

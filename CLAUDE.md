@@ -182,6 +182,12 @@ git add -A
 # 提交（首次提交）
 git commit -m "Initial commit: [项目名称]"
 
+# 推送到远程
+git push origin [branch]
+```
+
+**重要**：不要每次修改都自动提交，等彦祖说"提交"的时候再提交。
+
 # 推送并设置上游分支
 git push -u origin [branch]
 ```
