@@ -1,0 +1,927 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>美团经营宝 - 推广通报表</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+            background: #f5f6fa;
+            min-height: 100vh;
+            padding: 20px;
+        }
+        .container {
+            max-width: 900px;
+            margin: 0 auto;
+        }
+        .header {
+            background: linear-gradient(135deg, #ff6b35 0%, #ff8e53 100%);
+            color: white;
+            padding: 30px;
+            border-radius: 12px 12px 0 0;
+            text-align: center;
+        }
+        .header h1 {
+            font-size: 28px;
+            font-weight: 600;
+            margin-bottom: 8px;
+        }
+        .header .subtitle {
+            opacity: 0.9;
+            font-size: 14px;
+        }
+        .card {
+            background: white;
+            border-radius: 0 0 12px 12px;
+            padding: 30px;
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
+        }
+        .form-group {
+            margin-bottom: 24px;
+        }
+        .form-group label {
+            display: block;
+            font-weight: 500;
+            color: #333;
+            margin-bottom: 8px;
+            font-size: 14px;
+        }
+        .form-row {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 20px;
+        }
+        .form-row .form-group {
+            margin-bottom: 0;
+        }
+        input[type="text"],
+        select {
+            width: 100%;
+            padding: 12px 16px;
+            border: 1px solid #e0e0e0;
+            border-radius: 8px;
+            font-size: 14px;
+            transition: border-color 0.2s, box-shadow 0.2s;
+            background: #fff;
+        }
+        input[type="text"]:focus,
+        select:focus {
+            outline: none;
+            border-color: #ff6b35;
+            box-shadow: 0 0 0 3px rgba(255, 107, 53, 0.1);
+        }
+        input[type="text"]::placeholder {
+            color: #999;
+        }
+        .date-range-group {
+            display: flex;
+            gap: 12px;
+            flex-wrap: wrap;
+        }
+        .radio-card {
+            flex: 1;
+            min-width: 100px;
+        }
+        .radio-card input {
+            display: none;
+        }
+        .radio-card label {
+            display: block;
+            padding: 12px 16px;
+            border: 1px solid #e0e0e0;
+            border-radius: 8px;
+            text-align: center;
+            cursor: pointer;
+            transition: all 0.2s;
+            font-size: 14px;
+            color: #666;
+        }
+        .radio-card input:checked + label {
+            border-color: #ff6b35;
+            background: #fff5f2;
+            color: #ff6b35;
+            font-weight: 500;
+        }
+        .radio-card label:hover {
+            border-color: #ff8e53;
+        }
+        .custom-date {
+            flex: 2;
+            min-width: 300px;
+            display: none;
+            gap: 16px;
+            align-items: center;
+        }
+        .custom-date.show {
+            display: flex;
+        }
+        .custom-date .date-display {
+            flex: 1;
+            padding: 12px 16px;
+            border: 1px solid #e0e0e0;
+            border-radius: 8px;
+            background: #fafafa;
+            text-align: center;
+            color: #666;
+            font-size: 14px;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+        .custom-date .date-display:hover {
+            border-color: #ff8e53;
+        }
+        .custom-date .date-display.active {
+            border-color: #ff6b35;
+            background: #fff5f2;
+            color: #ff6b35;
+            font-weight: 500;
+        }
+        .custom-date .date-display .hint {
+            font-size: 12px;
+            color: #999;
+            font-weight: normal;
+        }
+        .custom-date .calendar-wrapper {
+            position: relative;
+        }
+        .calendar {
+            display: none;
+            position: absolute;
+            top: 100%;
+            left: 0;
+            background: white;
+            border: 1px solid #e0e0e0;
+            border-radius: 8px;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.15);
+            padding: 16px;
+            z-index: 100;
+            min-width: 280px;
+        }
+        .calendar.show {
+            display: block;
+        }
+        .calendar-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 12px;
+        }
+        .calendar-header .month {
+            font-weight: 600;
+            color: #333;
+        }
+        .calendar-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 12px;
+        }
+        .calendar-header .nav-group {
+            display: flex;
+            align-items: center;
+            gap: 4px;
+        }
+        .calendar-header .month {
+            font-weight: 600;
+            color: #333;
+            min-width: 80px;
+            text-align: center;
+        }
+        .calendar-header button {
+            background: none;
+            border: none;
+            cursor: pointer;
+            padding: 4px 8px;
+            color: #666;
+            font-size: 16px;
+            transition: color 0.2s;
+        }
+        .calendar-header button:hover {
+            color: #ff6b35;
+        }
+        .calendar-weekdays {
+            display: grid;
+            grid-template-columns: repeat(7, 1fr);
+            text-align: center;
+            font-size: 12px;
+            color: #999;
+            margin-bottom: 8px;
+        }
+        .calendar-days {
+            display: grid;
+            grid-template-columns: repeat(7, 1fr);
+            gap: 2px;
+        }
+        .calendar-day {
+            padding: 8px;
+            text-align: center;
+            cursor: pointer;
+            border-radius: 4px;
+            font-size: 13px;
+            color: #333;
+            transition: all 0.2s;
+        }
+        .calendar-day:hover {
+            background: #f0f0f0;
+        }
+        .calendar-day.disabled {
+            color: #ccc;
+            cursor: not-allowed;
+        }
+        .calendar-day.disabled:hover {
+            background: none;
+        }
+        .calendar-day.selected {
+            background: #ff6b35;
+            color: white;
+        }
+        .calendar-day.selected:hover {
+            background: #ff8e53;
+        }
+        .calendar-day.in-range {
+            background: #fff5f2;
+            color: #ff6b35;
+        }
+        .calendar-day.start-end {
+            background: #ff6b35;
+            color: white;
+            border-radius: 4px;
+        }
+        .btn-submit {
+            width: 100%;
+            padding: 14px;
+            background: linear-gradient(135deg, #ff6b35 0%, #ff8e53 100%);
+            color: white;
+            border: none;
+            border-radius: 8px;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: transform 0.2s, box-shadow 0.2s;
+            margin-top: 10px;
+        }
+        .btn-submit:hover {
+            transform: translateY(-1px);
+            box-shadow: 0 4px 15px rgba(255, 107, 53, 0.4);
+        }
+        .btn-submit:active {
+            transform: translateY(0);
+        }
+        .btn-submit:disabled {
+            background: #ccc;
+            cursor: not-allowed;
+            transform: none;
+            box-shadow: none;
+        }
+        .result {
+            margin-top: 30px;
+            display: none;
+        }
+        .result.show {
+            display: block;
+        }
+        .result-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 16px;
+            padding-bottom: 16px;
+            border-bottom: 1px solid #eee;
+        }
+        .result-header h3 {
+            font-size: 16px;
+            color: #333;
+        }
+        .btn-download {
+            padding: 8px 16px;
+            background: #52c41a;
+            color: white;
+            border: none;
+            border-radius: 6px;
+            font-size: 13px;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+        .btn-download:hover {
+            background: #73d13d;
+        }
+        .result-summary {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 16px;
+            margin-bottom: 20px;
+        }
+        .summary-item {
+            background: #f8f9fa;
+            padding: 16px;
+            border-radius: 8px;
+            text-align: center;
+        }
+        .summary-item .value {
+            font-size: 24px;
+            font-weight: 600;
+            color: #ff6b35;
+        }
+        .summary-item .label {
+            font-size: 12px;
+            color: #666;
+            margin-top: 4px;
+        }
+        .table-wrapper {
+            overflow-x: auto;
+            border: 1px solid #eee;
+            border-radius: 8px;
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 13px;
+        }
+        th {
+            background: #f8f9fa;
+            padding: 12px 16px;
+            text-align: left;
+            font-weight: 600;
+            color: #333;
+            border-bottom: 1px solid #eee;
+        }
+        td {
+            padding: 12px 16px;
+            border-bottom: 1px solid #f0f0f0;
+            color: #666;
+        }
+        tr:last-child td {
+            border-bottom: none;
+        }
+        tr:hover td {
+            background: #fafafa;
+        }
+        tr.summary-row td {
+            background: #fffbe6;
+            font-weight: 600;
+        }
+        .loading {
+            display: none;
+            text-align: center;
+            padding: 40px;
+        }
+        .loading.show {
+            display: block;
+        }
+        .spinner {
+            width: 40px;
+            height: 40px;
+            border: 3px solid #f0f0f0;
+            border-top-color: #ff6b35;
+            border-radius: 50%;
+            animation: spin 0.8s linear infinite;
+            margin: 0 auto 16px;
+        }
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+        .error {
+            display: none;
+            background: #fff2f0;
+            border: 1px solid #ffccc7;
+            color: #ff4d4f;
+            padding: 16px;
+            border-radius: 8px;
+            margin-top: 20px;
+        }
+        .error.show {
+            display: block;
+        }
+        .tips {
+            font-size: 12px;
+            color: #999;
+            margin-top: 6px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>美团经营宝 - 推广通报表</h1>
+            <div class="subtitle">自动获取门店推广数据，生成Excel报表</div>
+        </div>
+        <div class="card">
+            <form id="queryForm">
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="searchKey">门店搜索</label>
+                        <input type="text" id="searchKey" name="searchKey" placeholder="输入门店ID或名称，如：764510450">
+                        <div class="tips">支持门店ID或精确门店名称</div>
+                    </div>
+                    <div class="form-group">
+                        <label for="platform">平台</label>
+                        <select id="platform" name="platform">
+                            <option value="0">美团</option>
+                            <option value="1">点评</option>
+                        </select>
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label>日期范围</label>
+                    <div class="date-range-group">
+                        <div class="radio-card">
+                            <input type="radio" id="range7" name="dateRange" value="7" checked>
+                            <label for="range7">近7天</label>
+                        </div>
+                        <div class="radio-card">
+                            <input type="radio" id="range30" name="dateRange" value="30">
+                            <label for="range30">近30天</label>
+                        </div>
+                        <div class="radio-card">
+                            <input type="radio" id="rangeCustom" name="dateRange" value="custom">
+                            <label for="rangeCustom">自定义</label>
+                        </div>
+                        <div class="custom-date" id="customDateInputs">
+                            <div class="date-display" id="dateDisplay">
+                                <span id="dateDisplayText">点击选择日期范围</span>
+                            </div>
+                            <input type="hidden" id="beginDate" name="beginDate">
+                            <input type="hidden" id="endDate" name="endDate">
+                            <div class="calendar-wrapper">
+                                <div class="calendar" id="calendar"></div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <button type="submit" class="btn-submit" id="submitBtn">查询数据</button>
+            </form>
+
+            <div class="loading" id="loading">
+                <div class="spinner"></div>
+                <div>正在查询数据，请稍候...</div>
+            </div>
+
+            <div class="error" id="errorMsg"></div>
+
+            <div class="result" id="result">
+                <div class="result-header">
+                    <h3 id="shopInfo">报表数据</h3>
+                    <div>
+                        <span id="dateRangeInfo" style="color: #999; font-size: 13px; margin-right: 12px;"></span>
+                        <button class="btn-download" id="downloadBtn">下载Excel</button>
+                    </div>
+                </div>
+                <div class="result-summary" id="summary"></div>
+                <div class="table-wrapper">
+                    <table id="dataTable">
+                        <thead></thead>
+                        <tbody></tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // ========== 日历选择器 ==========
+        class DateRangePicker {
+            constructor(container, options = {}) {
+                this.container = container;
+                this.beginDate = null;
+                this.endDate = null;
+                this.currentYear = new Date().getFullYear();
+                this.currentMonth = new Date().getMonth();
+                this.selecting = 'start'; // 'start' or 'end'
+                this.isOpen = false;
+
+                this.weekdays = ['日', '一', '二', '三', '四', '五', '六'];
+
+                this.init();
+            }
+
+            init() {
+                // 日期显示点击事件
+                const dateDisplay = document.getElementById('dateDisplay');
+                const calendar = document.getElementById('calendar');
+
+                dateDisplay.addEventListener('click', (e) => {
+                    e.stopPropagation();
+                    this.toggle();
+                });
+
+                document.addEventListener('click', (e) => {
+                    if (!calendar.contains(e.target) && !dateDisplay.contains(e.target)) {
+                        this.close();
+                    }
+                });
+            }
+
+            toggle() {
+                if (this.isOpen) {
+                    this.close();
+                } else {
+                    this.open();
+                }
+            }
+
+            open() {
+                const calendar = document.getElementById('calendar');
+                calendar.classList.add('show');
+                this.isOpen = true;
+                this.render();
+            }
+
+            close() {
+                const calendar = document.getElementById('calendar');
+                calendar.classList.remove('show');
+                this.isOpen = false;
+            }
+
+            render() {
+                const calendar = document.getElementById('calendar');
+                const year = this.currentYear;
+                const month = this.currentMonth;
+
+                const monthNames = ['1月', '2月', '3月', '4月', '5月', '6月', '7月', '8月', '9月', '10月', '11月', '12月'];
+
+                let html = `
+                    <div class="calendar-header">
+                        <div class="nav-group">
+                            <button id="prevYear" title="上一年">&lt;&lt;</button>
+                            <button id="prevMonth" title="上一个月">&lt;</button>
+                        </div>
+                        <span class="month">${year}年${monthNames[month]}</span>
+                        <div class="nav-group">
+                            <button id="nextMonth" title="下一个月">&gt;</button>
+                            <button id="nextYear" title="下一年">&gt;&gt;</button>
+                        </div>
+                    </div>
+                    <div class="calendar-weekdays">
+                        ${this.weekdays.map(d => `<div>${d}</div>`).join('')}
+                    </div>
+                    <div class="calendar-days">
+                `;
+
+                // 获取本月第一天是周几
+                const firstDay = new Date(year, month, 1).getDay();
+                // 获取本月天数
+                const daysInMonth = new Date(year, month + 1, 0).getDate();
+                // 获取上个月天数
+                const daysInPrevMonth = new Date(year, month, 0).getDate();
+
+                // 上个月的日期
+                for (let i = firstDay - 1; i >= 0; i--) {
+                    const day = daysInPrevMonth - i;
+                    html += `<div class="calendar-day disabled">${day}</div>`;
+                }
+
+                // 本月的日期
+                const today = new Date();
+                today.setHours(0, 0, 0, 0);
+
+                for (let day = 1; day <= daysInMonth; day++) {
+                    const date = new Date(year, month, day);
+                    const dateStr = this.formatDate(date);
+                    const isPast = date > today;
+                    const isStart = this.beginDate === dateStr;
+                    const isEnd = this.endDate === dateStr;
+                    const isInRange = this.isInRange(dateStr);
+
+                    let classes = ['calendar-day'];
+                    if (isPast) classes.push('disabled');
+                    if (isStart || isEnd) classes.push('start-end');
+                    else if (isInRange) classes.push('in-range');
+
+                    html += `<div class="${classes.join(' ')}" data-date="${dateStr}">${day}</div>`;
+                }
+
+                // 下个月的日期（补齐格子）
+                const totalCells = firstDay + daysInMonth;
+                const remainingCells = totalCells % 7 === 0 ? 0 : 7 - (totalCells % 7);
+                for (let day = 1; day <= remainingCells; day++) {
+                    html += `<div class="calendar-day disabled">${day}</div>`;
+                }
+
+                html += '</div>';
+                calendar.innerHTML = html;
+
+                // 绑定事件（阻止事件冒泡，防止关闭日历）
+                const preventClose = (fn) => (e) => {
+                    e.stopPropagation();
+                    fn();
+                };
+
+                document.getElementById('prevYear').addEventListener('click', preventClose(() => this.prevYear()));
+                document.getElementById('nextYear').addEventListener('click', preventClose(() => this.nextYear()));
+                document.getElementById('prevMonth').addEventListener('click', preventClose(() => this.prevMonth()));
+                document.getElementById('nextMonth').addEventListener('click', preventClose(() => this.nextMonth()));
+
+                calendar.querySelectorAll('.calendar-day:not(.disabled)').forEach(el => {
+                    el.addEventListener('click', (e) => {
+                        e.stopPropagation();
+                        this.selectDate(el.dataset.date);
+                    });
+                });
+            }
+
+            prevYear() {
+                this.currentYear--;
+                this.render();
+            }
+
+            nextYear() {
+                this.currentYear++;
+                this.render();
+            }
+
+            prevMonth() {
+                if (this.currentMonth === 0) {
+                    this.currentMonth = 11;
+                    this.currentYear--;
+                } else {
+                    this.currentMonth--;
+                }
+                this.render();
+            }
+
+            nextMonth() {
+                if (this.currentMonth === 11) {
+                    this.currentMonth = 0;
+                    this.currentYear++;
+                } else {
+                    this.currentMonth++;
+                }
+                this.render();
+            }
+
+            selectDate(dateStr) {
+                if (this.selecting === 'start') {
+                    this.beginDate = dateStr;
+                    this.endDate = null;
+                    this.selecting = 'end';
+                    this.updateDisplay();
+                } else {
+                    // 如果选的结束日期比开始日期早，交换
+                    if (new Date(dateStr) < new Date(this.beginDate)) {
+                        this.endDate = this.beginDate;
+                        this.beginDate = dateStr;
+                    } else {
+                        this.endDate = dateStr;
+                    }
+                    this.selecting = 'start';
+                    this.updateDisplay();
+                    this.close();
+                }
+            }
+
+            isInRange(dateStr) {
+                if (!this.beginDate || !this.endDate) return false;
+                return dateStr > this.beginDate && dateStr < this.endDate;
+            }
+
+            formatDate(date) {
+                return `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}-${String(date.getDate()).padStart(2, '0')}`;
+            }
+
+            updateDisplay() {
+                const displayText = document.getElementById('dateDisplayText');
+                const beginInput = document.getElementById('beginDate');
+                const endInput = document.getElementById('endDate');
+                const dateDisplay = document.getElementById('dateDisplay');
+
+                if (this.beginDate && this.endDate) {
+                    const begin = this.beginDate.split('-');
+                    const end = this.endDate.split('-');
+                    displayText.innerHTML = `${begin[1]}-${begin[2]} 至 ${end[1]}-${end[2]}<br><span class="hint">${this.beginDate} ~ ${this.endDate}</span>`;
+                    beginInput.value = this.beginDate;
+                    endInput.value = this.endDate;
+                    dateDisplay.classList.remove('active');
+                } else if (this.beginDate) {
+                    displayText.innerHTML = `开始: ${this.beginDate}<br><span class="hint">请选择结束日期</span>`;
+                    dateDisplay.classList.add('active');
+                } else {
+                    displayText.innerHTML = '点击选择日期范围';
+                    dateDisplay.classList.remove('active');
+                }
+            }
+
+            getValue() {
+                return { begin: this.beginDate, end: this.endDate };
+            }
+
+            isValid() {
+                return this.beginDate && this.endDate;
+            }
+        }
+
+        // ========== 表单逻辑 ==========
+        let dateRangePicker;
+        let currentQueryParams = null;
+
+        document.addEventListener('DOMContentLoaded', function() {
+            dateRangePicker = new DateRangePicker(document.getElementById('customDateInputs'));
+        });
+
+        // 日期范围切换
+        document.querySelectorAll('input[name="dateRange"]').forEach(radio => {
+            radio.addEventListener('change', function() {
+                const customInputs = document.getElementById('customDateInputs');
+                if (this.value === 'custom') {
+                    customInputs.classList.add('show');
+                } else {
+                    customInputs.classList.remove('show');
+                }
+            });
+        });
+
+        // 计算近N天的日期
+        function getDateDaysAgo(days) {
+            const date = new Date();
+            date.setDate(date.getDate() - days);
+            return date.toISOString().split('T')[0];
+        }
+
+        // 表单提交
+        document.getElementById('queryForm').addEventListener('submit', async function(e) {
+            e.preventDefault();
+
+            const searchKey = document.getElementById('searchKey').value.trim();
+            const platform = document.getElementById('platform').value;
+            const dateRange = document.querySelector('input[name="dateRange"]:checked').value;
+
+            if (!searchKey) {
+                showError('请输入门店ID或名称');
+                return;
+            }
+
+            let beginDate, endDate;
+            if (dateRange === '7') {
+                endDate = new Date().toISOString().split('T')[0];
+                beginDate = getDateDaysAgo(7);
+            } else if (dateRange === '30') {
+                endDate = new Date().toISOString().split('T')[0];
+                beginDate = getDateDaysAgo(30);
+            } else {
+                if (!dateRangePicker.isValid()) {
+                    showError('请选择完整的日期范围');
+                    return;
+                }
+                const dates = dateRangePicker.getValue();
+                beginDate = dates.begin;
+                endDate = dates.end;
+            }
+
+            // 显示加载状态
+            document.getElementById('loading').classList.add('show');
+            document.getElementById('result').classList.remove('show');
+            document.getElementById('errorMsg').classList.remove('show');
+            document.getElementById('submitBtn').disabled = true;
+
+            // 保存查询参数用于下载
+            currentQueryParams = {
+                search_key: searchKey,
+                platform: parseInt(platform),
+                begin_date: beginDate,
+                end_date: endDate
+            };
+
+            try {
+                const response = await fetch('/api/query', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify(currentQueryParams)
+                });
+
+                const data = await response.json();
+
+                if (data.status === 'success') {
+                    displayResult(data.data, beginDate, endDate);
+                } else {
+                    showError(data.message || '查询失败');
+                }
+            } catch (error) {
+                showError('网络请求失败: ' + error.message);
+            } finally {
+                document.getElementById('loading').classList.remove('show');
+                document.getElementById('submitBtn').disabled = false;
+            }
+        });
+
+        // 下载Excel
+        document.getElementById('downloadBtn').addEventListener('click', async function() {
+            if (!currentQueryParams) {
+                showError('请先查询数据');
+                return;
+            }
+
+            const btn = this;
+            btn.disabled = true;
+            btn.textContent = '生成中...';
+
+            try {
+                const response = await fetch('/api/download', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify(currentQueryParams)
+                });
+
+                if (response.ok) {
+                    const blob = await response.blob();
+                    const url = window.URL.createObjectURL(blob);
+                    const a = document.createElement('a');
+                    a.href = url;
+                    // 从查询参数生成文件名
+                    const params = currentQueryParams;
+                    const begin = params.begin_date.replace(/-/g, '');
+                    const end = params.end_date.replace(/-/g, '');
+                    a.download = `报表_${params.search_key}_${begin}_${end}.xlsx`;
+                    document.body.appendChild(a);
+                    a.click();
+                    window.URL.revokeObjectURL(url);
+                    document.body.removeChild(a);
+                } else {
+                    const data = await response.json();
+                    showError(data.message || '下载失败');
+                }
+            } catch (error) {
+                showError('下载失败: ' + error.message);
+            } finally {
+                btn.disabled = false;
+                btn.textContent = '下载Excel';
+            }
+        });
+
+        function showError(message) {
+            const errorEl = document.getElementById('errorMsg');
+            errorEl.textContent = message;
+            errorEl.classList.add('show');
+        }
+
+        function displayResult(data, beginDate, endDate) {
+            document.getElementById('result').classList.add('show');
+            document.getElementById('errorMsg').classList.remove('show');
+
+            document.getElementById('shopInfo').textContent = data.shop_name;
+            document.getElementById('dateRangeInfo').textContent = `${beginDate} 至 ${endDate}`;
+
+            const summary = document.getElementById('summary');
+            summary.innerHTML = `
+                <div class="summary-item">
+                    <div class="value">${data.total_cost || 0}</div>
+                    <div class="label">总花费(元)</div>
+                </div>
+                <div class="summary-item">
+                    <div class="value">${data.total_clicks || 0}</div>
+                    <div class="label">总点击</div>
+                </div>
+                <div class="summary-item">
+                    <div class="value">${data.total_exposure || 0}</div>
+                    <div class="label">总曝光</div>
+                </div>
+                <div class="summary-item">
+                    <div class="value">${data.cpc || 0}</div>
+                    <div class="label">平均CPC(元)</div>
+                </div>
+            `;
+
+            const thead = document.querySelector('#dataTable thead');
+            const tbody = document.querySelector('#dataTable tbody');
+
+            const columns = [
+                { key: 'date', label: '日期' },
+                { key: 'cost', label: '花费(元)' },
+                { key: 'cash_cost', label: '现金花费(元)' },
+                { key: 'exposure', label: '曝光' },
+                { key: 'clicks', label: '点击' },
+                { key: 'click_rate', label: '点击率' },
+                { key: 'cpc', label: 'CPC(元)' },
+                { key: 'group_orders', label: '团购订单量' },
+                { key: 'orders', label: '订单量' },
+                { key: 'browse', label: '商户浏览量' },
+                { key: 'interested', label: '感兴趣' }
+            ];
+
+            thead.innerHTML = '<tr>' + columns.map(c => `<th>${c.label}</th>`).join('') + '</tr>';
+            tbody.innerHTML = '';
+
+            if (data.rows && data.rows.length > 0) {
+                // 只显示汇总行
+                const row = data.rows[0];
+                const tr = document.createElement('tr');
+                tr.className = 'summary-row';
+                tr.innerHTML = columns.map(c => `<td>${row[c.key] || '-'}</td>`).join('');
+                tbody.appendChild(tr);
+            } else {
+                tbody.innerHTML = '<tr><td colspan="' + columns.length + '" style="text-align: center; color: #999;">暂无数据</td></tr>';
+            }
+        }
+    </script>
+</body>
+</html>
