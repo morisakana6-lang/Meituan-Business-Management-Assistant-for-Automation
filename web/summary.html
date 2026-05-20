@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>美团经营宝 - 推广通报表</title>
+    <title>美团经营宝 - 汇总报表</title>
     <style>
         * {
             margin: 0;
@@ -57,27 +57,90 @@
             grid-template-columns: 1fr 1fr;
             gap: 20px;
         }
-        .form-row .form-group {
-            margin-bottom: 0;
+        .shop-list {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
         }
-        input[type="text"],
-        select {
-            width: 100%;
-            padding: 12px 16px;
+        .shop-item {
+            display: flex;
+            gap: 8px;
+            align-items: center;
+        }
+        .shop-item input {
+            flex: 1;
+            padding: 10px 14px;
             border: 1px solid #e0e0e0;
             border-radius: 8px;
             font-size: 14px;
-            transition: border-color 0.2s, box-shadow 0.2s;
-            background: #fff;
         }
-        input[type="text"]:focus,
-        select:focus {
+        .shop-item input:focus {
             outline: none;
             border-color: #ff6b35;
             box-shadow: 0 0 0 3px rgba(255, 107, 53, 0.1);
         }
-        input[type="text"]::placeholder {
-            color: #999;
+        .btn-remove {
+            width: 32px;
+            height: 32px;
+            border: none;
+            background: #ff4d4f;
+            color: white;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 16px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        .btn-remove:hover {
+            background: #ff7875;
+        }
+        .btn-add {
+            padding: 8px 16px;
+            border: 1px dashed #ccc;
+            background: #fafafa;
+            color: #666;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 13px;
+            transition: all 0.2s;
+        }
+        .btn-add:hover {
+            border-color: #ff6b35;
+            color: #ff6b35;
+        }
+        .platform-group {
+            display: flex;
+            gap: 12px;
+            flex-wrap: wrap;
+        }
+        .platform-option {
+            flex: 1;
+            min-width: 100px;
+        }
+        .platform-option input {
+            display: none;
+        }
+        .platform-option label {
+            display: block;
+            padding: 10px 16px;
+            border: 1px solid #e0e0e0;
+            border-radius: 8px;
+            text-align: center;
+            cursor: pointer;
+            transition: all 0.2s;
+            font-size: 14px;
+            color: #666;
+            margin-bottom: 0;
+        }
+        .platform-option input:checked + label {
+            border-color: #ff6b35;
+            background: #fff5f2;
+            color: #ff6b35;
+            font-weight: 500;
+        }
+        .platform-option label:hover {
+            border-color: #ff8e53;
         }
         .date-range-group {
             display: flex;
@@ -175,21 +238,6 @@
         .calendar-header .month {
             font-weight: 600;
             color: #333;
-        }
-        .calendar-header {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            margin-bottom: 12px;
-        }
-        .calendar-header .nav-group {
-            display: flex;
-            align-items: center;
-            gap: 4px;
-        }
-        .calendar-header .month {
-            font-weight: 600;
-            color: #333;
             min-width: 80px;
             text-align: center;
         }
@@ -248,11 +296,6 @@
             background: #fff5f2;
             color: #ff6b35;
         }
-        .calendar-day.start-end {
-            background: #ff6b35;
-            color: white;
-            border-radius: 4px;
-        }
         .btn-submit {
             width: 100%;
             padding: 14px;
@@ -278,93 +321,6 @@
             cursor: not-allowed;
             transform: none;
             box-shadow: none;
-        }
-        .result {
-            margin-top: 30px;
-            display: none;
-        }
-        .result.show {
-            display: block;
-        }
-        .result-header {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            margin-bottom: 16px;
-            padding-bottom: 16px;
-            border-bottom: 1px solid #eee;
-        }
-        .result-header h3 {
-            font-size: 16px;
-            color: #333;
-        }
-        .btn-download {
-            padding: 8px 16px;
-            background: #52c41a;
-            color: white;
-            border: none;
-            border-radius: 6px;
-            font-size: 13px;
-            cursor: pointer;
-            transition: all 0.2s;
-        }
-        .btn-download:hover {
-            background: #73d13d;
-        }
-        .result-summary {
-            display: grid;
-            grid-template-columns: repeat(4, 1fr);
-            gap: 16px;
-            margin-bottom: 20px;
-        }
-        .summary-item {
-            background: #f8f9fa;
-            padding: 16px;
-            border-radius: 8px;
-            text-align: center;
-        }
-        .summary-item .value {
-            font-size: 24px;
-            font-weight: 600;
-            color: #ff6b35;
-        }
-        .summary-item .label {
-            font-size: 12px;
-            color: #666;
-            margin-top: 4px;
-        }
-        .table-wrapper {
-            overflow-x: auto;
-            border: 1px solid #eee;
-            border-radius: 8px;
-        }
-        table {
-            width: 100%;
-            border-collapse: collapse;
-            font-size: 13px;
-        }
-        th {
-            background: #f8f9fa;
-            padding: 12px 16px;
-            text-align: left;
-            font-weight: 600;
-            color: #333;
-            border-bottom: 1px solid #eee;
-        }
-        td {
-            padding: 12px 16px;
-            border-bottom: 1px solid #f0f0f0;
-            color: #666;
-        }
-        tr:last-child td {
-            border-bottom: none;
-        }
-        tr:hover td {
-            background: #fafafa;
-        }
-        tr.summary-row td {
-            background: #fffbe6;
-            font-weight: 600;
         }
         .loading {
             display: none;
@@ -398,33 +354,88 @@
         .error.show {
             display: block;
         }
+        .success {
+            display: none;
+            background: #f6ffed;
+            border: 1px solid #b7eb8f;
+            color: #52c41a;
+            padding: 16px;
+            border-radius: 8px;
+            margin-top: 20px;
+        }
+        .success.show {
+            display: block;
+        }
         .tips {
             font-size: 12px;
             color: #999;
             margin-top: 6px;
+        }
+        .back-link {
+            display: inline-block;
+            margin-bottom: 16px;
+            color: #ff6b35;
+            text-decoration: none;
+            font-size: 14px;
+        }
+        .back-link:hover {
+            text-decoration: underline;
         }
     </style>
 </head>
 <body>
     <div class="container">
         <div class="header">
-            <h1>美团经营宝 - 推广通报表</h1>
-            <div class="subtitle">自动获取门店推广数据，生成Excel报表</div>
+            <h1>美团经营宝 - 汇总报表</h1>
+            <div class="subtitle">生成多板块汇总 Excel 报表</div>
         </div>
+
         <div class="card">
-            <form id="queryForm">
+            <form id="summaryForm">
+                <div class="form-group">
+                    <label>门店列表</label>
+                    <div class="shop-list" id="shopList">
+                        <div class="shop-item">
+                            <input type="text" class="shop-input" placeholder="输入门店ID，如：1933643130" value="1933643130">
+                            <button type="button" class="btn-remove" onclick="removeShop(this)">&times;</button>
+                        </div>
+                    </div>
+                    <button type="button" class="btn-add" onclick="addShop()">+ 添加门店</button>
+                    <div class="tips">支持多个门店，将生成多门店汇总报表</div>
+                </div>
+
                 <div class="form-row">
                     <div class="form-group">
-                        <label for="searchKey">门店搜索</label>
-                        <input type="text" id="searchKey" name="searchKey" placeholder="输入门店ID或名称，如：764510450">
-                        <div class="tips">支持门店ID或精确门店名称</div>
+                        <label>平台</label>
+                        <div class="platform-group">
+                            <div class="platform-option">
+                                <input type="radio" id="platform0" name="platform" value="0" checked>
+                                <label for="platform0">全平台</label>
+                            </div>
+                            <div class="platform-option">
+                                <input type="radio" id="platform1" name="platform" value="1">
+                                <label for="platform1">点评</label>
+                            </div>
+                            <div class="platform-option">
+                                <input type="radio" id="platform2" name="platform" value="2">
+                                <label for="platform2">美团</label>
+                            </div>
+                        </div>
                     </div>
+
                     <div class="form-group">
-                        <label for="platform">平台</label>
-                        <select id="platform" name="platform">
-                            <option value="0">美团</option>
-                            <option value="1">点评</option>
-                        </select>
+                        <label>门店评论平台</label>
+                        <div class="platform-group">
+                            <div class="platform-option">
+                                <input type="radio" id="reviewPlatform1" name="reviewPlatform" value="1" checked>
+                                <label for="reviewPlatform1">点评</label>
+                            </div>
+                            <div class="platform-option">
+                                <input type="radio" id="reviewPlatform2" name="reviewPlatform" value="2">
+                                <label for="reviewPlatform2">美团</label>
+                            </div>
+                        </div>
+                        <div class="tips">注：门店评论不支持全平台，需单独选择</div>
                     </div>
                 </div>
 
@@ -434,6 +445,10 @@
                         <div class="radio-card">
                             <input type="radio" id="range7" name="dateRange" value="7" checked>
                             <label for="range7">近7天</label>
+                        </div>
+                        <div class="radio-card">
+                            <input type="radio" id="range15" name="dateRange" value="15">
+                            <label for="range15">近15天</label>
                         </div>
                         <div class="radio-card">
                             <input type="radio" id="range30" name="dateRange" value="30">
@@ -456,30 +471,20 @@
                     </div>
                 </div>
 
-                <button type="submit" class="btn-submit" id="submitBtn">查询数据</button>
+                <button type="submit" class="btn-submit" id="submitBtn">生成报表</button>
             </form>
 
             <div class="loading" id="loading">
                 <div class="spinner"></div>
-                <div>正在查询数据，请稍候...</div>
+                <div>正在生成报表，请稍候...</div>
             </div>
 
             <div class="error" id="errorMsg"></div>
 
-            <div class="result" id="result">
-                <div class="result-header">
-                    <h3 id="shopInfo">报表数据</h3>
-                    <div>
-                        <span id="dateRangeInfo" style="color: #999; font-size: 13px; margin-right: 12px;"></span>
-                        <button class="btn-download" id="downloadBtn">下载Excel</button>
-                    </div>
-                </div>
-                <div class="result-summary" id="summary"></div>
-                <div class="table-wrapper">
-                    <table id="dataTable">
-                        <thead></thead>
-                        <tbody></tbody>
-                    </table>
+            <div class="success" id="successMsg">
+                <div style="display: flex; justify-content: space-between; align-items: center;">
+                    <span>报表生成成功！</span>
+                    <button class="btn-download" id="downloadBtn" style="padding: 8px 16px; background: #52c41a; color: white; border: none; border-radius: 6px; font-size: 13px; cursor: pointer;">下载 Excel</button>
                 </div>
             </div>
         </div>
@@ -494,7 +499,7 @@
                 this.endDate = null;
                 this.currentYear = new Date().getFullYear();
                 this.currentMonth = new Date().getMonth();
-                this.selecting = 'start'; // 'start' or 'end'
+                this.selecting = 'start';
                 this.isOpen = false;
 
                 this.weekdays = ['日', '一', '二', '三', '四', '五', '六'];
@@ -503,7 +508,6 @@
             }
 
             init() {
-                // 日期显示点击事件
                 const dateDisplay = document.getElementById('dateDisplay');
                 const calendar = document.getElementById('calendar');
 
@@ -565,20 +569,15 @@
                     <div class="calendar-days">
                 `;
 
-                // 获取本月第一天是周几
                 const firstDay = new Date(year, month, 1).getDay();
-                // 获取本月天数
                 const daysInMonth = new Date(year, month + 1, 0).getDate();
-                // 获取上个月天数
                 const daysInPrevMonth = new Date(year, month, 0).getDate();
 
-                // 上个月的日期
                 for (let i = firstDay - 1; i >= 0; i--) {
                     const day = daysInPrevMonth - i;
                     html += `<div class="calendar-day disabled">${day}</div>`;
                 }
 
-                // 本月的日期
                 const today = new Date();
                 today.setHours(0, 0, 0, 0);
 
@@ -598,7 +597,6 @@
                     html += `<div class="${classes.join(' ')}" data-date="${dateStr}">${day}</div>`;
                 }
 
-                // 下个月的日期（补齐格子）
                 const totalCells = firstDay + daysInMonth;
                 const remainingCells = totalCells % 7 === 0 ? 0 : 7 - (totalCells % 7);
                 for (let day = 1; day <= remainingCells; day++) {
@@ -608,7 +606,6 @@
                 html += '</div>';
                 calendar.innerHTML = html;
 
-                // 绑定事件（阻止事件冒泡，防止关闭日历）
                 const preventClose = (fn) => (e) => {
                     e.stopPropagation();
                     fn();
@@ -664,7 +661,6 @@
                     this.selecting = 'end';
                     this.updateDisplay();
                 } else {
-                    // 如果选的结束日期比开始日期早，交换
                     if (new Date(dateStr) < new Date(this.beginDate)) {
                         this.endDate = this.beginDate;
                         this.beginDate = dateStr;
@@ -737,34 +733,59 @@
             });
         });
 
-        // 计算近N天的日期
+        // 计算N天前的日期
         function getDateDaysAgo(days) {
             const date = new Date();
             date.setDate(date.getDate() - days);
             return date.toISOString().split('T')[0];
         }
 
+        // 添加门店输入框
+        function addShop() {
+            const shopList = document.getElementById('shopList');
+            const div = document.createElement('div');
+            div.className = 'shop-item';
+            div.innerHTML = `
+                <input type="text" class="shop-input" placeholder="输入门店ID，如：1933643130">
+                <button type="button" class="btn-remove" onclick="removeShop(this)">&times;</button>
+            `;
+            shopList.appendChild(div);
+        }
+
+        // 移除门店输入框
+        function removeShop(btn) {
+            const shopList = document.getElementById('shopList');
+            const items = shopList.querySelectorAll('.shop-item');
+            if (items.length > 1) {
+                btn.parentElement.remove();
+            }
+        }
+
         // 表单提交
-        document.getElementById('queryForm').addEventListener('submit', async function(e) {
+        document.getElementById('summaryForm').addEventListener('submit', async function(e) {
             e.preventDefault();
 
-            const searchKey = document.getElementById('searchKey').value.trim();
-            const platform = document.getElementById('platform').value;
-            const dateRange = document.querySelector('input[name="dateRange"]:checked').value;
+            // 收集门店列表
+            const shopInputs = document.querySelectorAll('.shop-input');
+            const shopIds = [];
+            for (const input of shopInputs) {
+                const val = input.value.trim();
+                if (val) {
+                    shopIds.push(val);
+                }
+            }
 
-            if (!searchKey) {
-                showError('请输入门店ID或名称');
+            if (shopIds.length === 0) {
+                showError('请至少添加一个门店ID');
                 return;
             }
 
+            const platform = parseInt(document.querySelector('input[name="platform"]:checked').value);
+            const reviewPlatform = parseInt(document.querySelector('input[name="reviewPlatform"]:checked').value);
+            const dateRange = document.querySelector('input[name="dateRange"]:checked').value;
+
             let beginDate, endDate;
-            if (dateRange === '7') {
-                endDate = new Date().toISOString().split('T')[0];
-                beginDate = getDateDaysAgo(7);
-            } else if (dateRange === '30') {
-                endDate = new Date().toISOString().split('T')[0];
-                beginDate = getDateDaysAgo(30);
-            } else {
+            if (dateRange === 'custom') {
                 if (!dateRangePicker.isValid()) {
                     showError('请选择完整的日期范围');
                     return;
@@ -772,37 +793,43 @@
                 const dates = dateRangePicker.getValue();
                 beginDate = dates.begin;
                 endDate = dates.end;
+            } else {
+                endDate = new Date().toISOString().split('T')[0];
+                beginDate = getDateDaysAgo(parseInt(dateRange));
             }
 
             // 显示加载状态
             document.getElementById('loading').classList.add('show');
-            document.getElementById('result').classList.remove('show');
             document.getElementById('errorMsg').classList.remove('show');
+            document.getElementById('successMsg').classList.remove('show');
             document.getElementById('submitBtn').disabled = true;
 
-            // 保存查询参数用于下载
-            currentQueryParams = {
-                search_key: searchKey,
-                platform: parseInt(platform),
-                begin_date: beginDate,
-                end_date: endDate
+            // 保存参数用于下载
+            window.currentConfig = {
+                "门店列表": shopIds,
+                "平台": platform,
+                "门店评论平台": reviewPlatform,
+                "日期范围": {
+                    "begin": beginDate,
+                    "end": endDate
+                }
             };
 
             try {
-                const response = await fetch('/api/query', {
+                const response = await fetch('/api/summary/generate', {
                     method: 'POST',
                     headers: {
                         'Content-Type': 'application/json'
                     },
-                    body: JSON.stringify(currentQueryParams)
+                    body: JSON.stringify(window.currentConfig)
                 });
 
-                const data = await response.json();
-
-                if (data.status === 'success') {
-                    displayResult(data.data, beginDate, endDate);
+                if (response.ok) {
+                    document.getElementById('loading').classList.remove('show');
+                    document.getElementById('successMsg').classList.add('show');
                 } else {
-                    showError(data.message || '查询失败');
+                    const data = await response.json();
+                    showError(data.message || '生成失败');
                 }
             } catch (error) {
                 showError('网络请求失败: ' + error.message);
@@ -812,24 +839,24 @@
             }
         });
 
-        // 下载Excel
+        // 下载按钮
         document.getElementById('downloadBtn').addEventListener('click', async function() {
-            if (!currentQueryParams) {
-                showError('请先查询数据');
+            if (!window.currentConfig) {
+                showError('请先生成报表');
                 return;
             }
 
             const btn = this;
             btn.disabled = true;
-            btn.textContent = '生成中...';
+            btn.textContent = '下载中...';
 
             try {
-                const response = await fetch('/api/download', {
+                const response = await fetch('/api/summary/generate', {
                     method: 'POST',
                     headers: {
                         'Content-Type': 'application/json'
                     },
-                    body: JSON.stringify(currentQueryParams)
+                    body: JSON.stringify(window.currentConfig)
                 });
 
                 if (response.ok) {
@@ -837,11 +864,12 @@
                     const url = window.URL.createObjectURL(blob);
                     const a = document.createElement('a');
                     a.href = url;
-                    // 从查询参数生成文件名
-                    const params = currentQueryParams;
-                    const begin = params.begin_date.replace(/-/g, '');
-                    const end = params.end_date.replace(/-/g, '');
-                    a.download = `报表_${params.search_key}_${begin}_${end}.xlsx`;
+
+                    const config = window.currentConfig;
+                    const shopLabel = config['门店列表'].length > 1 ? '多门店' : config['门店列表'][0];
+                    const filename = `美团经营宝汇总_${shopLabel}_${config['日期范围'].begin}_${config['日期范围'].end}.xlsx`;
+
+                    a.download = filename;
                     document.body.appendChild(a);
                     a.click();
                     window.URL.revokeObjectURL(url);
@@ -854,73 +882,16 @@
                 showError('下载失败: ' + error.message);
             } finally {
                 btn.disabled = false;
-                btn.textContent = '下载Excel';
+                btn.textContent = '下载 Excel';
             }
         });
 
         function showError(message) {
+            document.getElementById('loading').classList.remove('show');
+            document.getElementById('successMsg').classList.remove('show');
             const errorEl = document.getElementById('errorMsg');
             errorEl.textContent = message;
             errorEl.classList.add('show');
-        }
-
-        function displayResult(data, beginDate, endDate) {
-            document.getElementById('result').classList.add('show');
-            document.getElementById('errorMsg').classList.remove('show');
-
-            document.getElementById('shopInfo').textContent = data.shop_name;
-            document.getElementById('dateRangeInfo').textContent = `${beginDate} 至 ${endDate}`;
-
-            const summary = document.getElementById('summary');
-            summary.innerHTML = `
-                <div class="summary-item">
-                    <div class="value">${data.total_cost || 0}</div>
-                    <div class="label">总花费(元)</div>
-                </div>
-                <div class="summary-item">
-                    <div class="value">${data.total_clicks || 0}</div>
-                    <div class="label">总点击</div>
-                </div>
-                <div class="summary-item">
-                    <div class="value">${data.total_exposure || 0}</div>
-                    <div class="label">总曝光</div>
-                </div>
-                <div class="summary-item">
-                    <div class="value">${data.cpc || 0}</div>
-                    <div class="label">平均CPC(元)</div>
-                </div>
-            `;
-
-            const thead = document.querySelector('#dataTable thead');
-            const tbody = document.querySelector('#dataTable tbody');
-
-            const columns = [
-                { key: 'date', label: '日期' },
-                { key: 'cost', label: '花费(元)' },
-                { key: 'cash_cost', label: '现金花费(元)' },
-                { key: 'exposure', label: '曝光' },
-                { key: 'clicks', label: '点击' },
-                { key: 'click_rate', label: '点击率' },
-                { key: 'cpc', label: 'CPC(元)' },
-                { key: 'group_orders', label: '团购订单量' },
-                { key: 'orders', label: '订单量' },
-                { key: 'browse', label: '商户浏览量' },
-                { key: 'interested', label: '感兴趣' }
-            ];
-
-            thead.innerHTML = '<tr>' + columns.map(c => `<th>${c.label}</th>`).join('') + '</tr>';
-            tbody.innerHTML = '';
-
-            if (data.rows && data.rows.length > 0) {
-                // 只显示汇总行
-                const row = data.rows[0];
-                const tr = document.createElement('tr');
-                tr.className = 'summary-row';
-                tr.innerHTML = columns.map(c => `<td>${row[c.key] || '-'}</td>`).join('');
-                tbody.appendChild(tr);
-            } else {
-                tbody.innerHTML = '<tr><td colspan="' + columns.length + '" style="text-align: center; color: #999;">暂无数据</td></tr>';
-            }
         }
     </script>
 </body>

@@ -47,12 +47,12 @@ meituan/
 │   ├── client.py           # API 客户端（含get_shop_name）
 │   └── excel_generator.py  # Excel 生成器
 │
-├── shop_review/            # 门店评价板块
+├── shop_review/            # 门店评论板块
 ├── online_consultation/    # 在线咨询板块
 ├── trade_analysis/         # 交易分析板块
-├── customer_flow/          # 客流统计板块
+├── customer_flow/          # 客流分析板块
 ├── quantianzhan/           # 全站推广板块
-└── simple_board/           # 简单面板板块
+└── simple_board/           # 简版看板板块
 ```
 
 ## 板块模块规范
@@ -109,7 +109,7 @@ def get_shop_name(shop_id: str) -> str:
 | 推广通 | `https://e.dianping.com/shopdiy/report/datareport/pc/ajax/getBoardReport` | GET |
 | 评论统计 | `https://e.dianping.com/gateway/adviser/data` | GET |
 | 星级评分 | `https://e.dianping.com/gateway/adviser/data` | POST |
-| 在线咨询 | `https://e.dianping.com/mda/v5/onlineConsultant` | POST |
+| 在线咨询分析 | `https://e.dianping.com/mda/v5/onlineConsultant` | POST |
 
 **platform 参数值**：`platform=0` 代表点评+美团全平台，1代表点评，2代表美团。
 
