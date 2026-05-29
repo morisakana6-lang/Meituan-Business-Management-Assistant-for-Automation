@@ -1,0 +1,15 @@
+# 美团经营宝自动化助手依赖
+
+# 核心依赖
+requests>=2.25.0
+openpyxl>=3.1.0
+
+# Playwright 浏览器自动化
+playwright>=1.40.0
+playwright-stealth>=1.0.6
+
+# Web 服务（可选，用于 API 接口）
+flask>=2.0.0
+
+# 生产环境推荐使用 gunicorn
+gunicorn>=20.0.0

@@ -29,11 +29,21 @@ TITLE_FONT = Font(name="微软雅黑", bold=True, size=14)
 HEADER_FONT = Font(name="微软雅黑", bold=True, size=10)
 DATA_FONT = Font(name="微软雅黑", size=10)
 
-TITLE_FILL = PatternFill(start_color="FFFBE5D5", end_color="FFFBE5D5", fill_type="solid")
+TITLE_FILL = PatternFill(start_color="FFFBE5D5", end_color="FFFBE5D5", fill_type="solid")  # 橙色
 HEADER_FILL = PatternFill(start_color="FFE8E8E8", end_color="FFE8E8E8", fill_type="solid")
 WHITE_FILL = PatternFill(start_color="FFFFFFFF", end_color="FFFFFFFF", fill_type="solid")
 ERROR_FILL = PatternFill(start_color="FFFFE6E6", end_color="FFFFE6E6", fill_type="solid")
-FLOW_FILL = PatternFill(start_color="FFE3F1D9", end_color="FFE3F1D9", fill_type="solid")  # 绿色（简版看板流量数据标题行）
+FLOW_FILL = PatternFill(start_color="FFE3F1D9", end_color="FFE3F1D9", fill_type="solid")  # 浅绿（简版看板基础信息）
+COMPETE_FILL = PatternFill(start_color="FFE3F2D9", end_color="FFE3F2D9", fill_type="solid")  # 浅绿（推广通竞争分析）
+FLOW_TITLE_FILL = PatternFill(start_color="FFFBE5D5", end_color="FFFBE5D5", fill_type="solid")  # 橙色（简版看板流量数据）
+STAR_FILL = PatternFill(start_color="FFD9E8FF", end_color="FFD9E8FF", fill_type="solid")  # 浅蓝（简版看板星级数据）
+REVIEW_FILL = PatternFill(start_color="FFD9D0FF", end_color="FFD9D0FF", fill_type="solid")  # 浅紫（简版看板门店评价）
+# 客流分析分组颜色
+FLOW_USER_FILL = PatternFill(start_color="FFD6E8FF", end_color="FFD6E8FF", fill_type="solid")  # 浅蓝（引流用户数据）
+ONLINE_CONSULT_FILL = PatternFill(start_color="FFD5F5DC", end_color="FFD5F5DC", fill_type="solid")  # 浅绿（在线咨询）
+TRADE_FILL = PatternFill(start_color="FFF0E68C", end_color="FFF0E68C", fill_type="solid")  # 浅黄（门店交易）
+REVIEW_OVERVIEW_FILL = PatternFill(start_color="FFEEE8F5", end_color="FFEEE8F5", fill_type="solid")  # 浅紫（门店评价概览）
+STAR_OVERVIEW_FILL = PatternFill(start_color="FFFCE4EC", end_color="FFFCE4EC", fill_type="solid")  # 浅粉（星级概览）
 
 CENTER_ALIGN = Alignment(horizontal="center", vertical="center")
 LEFT_ALIGN = Alignment(horizontal="left", vertical="center")
@@ -68,7 +78,11 @@ class SummaryExcelGenerator:
             widths: 列宽列表
             data_rows: 数据行列表（每行是列表）
             row_heights: 每行的行高列表，默认 [28, 22, 18, ...]
-            title_style: 标题样式，"default"=统一样式，"grouped"=分组样式（简版看板）
+            title_style: 标题样式
+                - "default": 统一样式（橙色背景）
+                - "tuiguangtong": 推广通样式（A1:R1橙色 + S1:V1无背景"竞争分析"）
+                - "simple_board": 简版看板样式（A1:L1浅绿 + M1:P1橙色 + Q1:R1浅蓝 + S1:Y1浅紫）
+                - "customer_flow": 客流分析样式（多分组）
         """
         ws = self.wb.create_sheet(title=sheet_name)
 
@@ -83,8 +97,102 @@ class SummaryExcelGenerator:
 
         # 标题行
         last_col = get_column_letter(num_cols) if num_cols > 0 else "A"
-        if title_style == "grouped" and num_cols >= 13:
-            # 分组标题样式（简版看板）：A-I 绿色（FFE3F1D9），J-M 橙色（FFFBE5D5）
+
+        if title_style == "tuiguangtong" and num_cols >= 22:
+            # 推广通样式：A1:R1 橙色标题 + S1:V1 "竞争分析"（浅绿色）
+            ws.merge_cells("A1:R1")
+            title_cell = ws["A1"]
+            title_cell.value = title
+            title_cell.font = TITLE_FONT
+            title_cell.fill = TITLE_FILL
+            title_cell.alignment = CENTER_ALIGN
+
+            ws.merge_cells("S1:V1")
+            comp_cell = ws["S1"]
+            comp_cell.value = "竞争分析"
+            comp_cell.font = TITLE_FONT
+            comp_cell.fill = COMPETE_FILL
+            comp_cell.alignment = CENTER_ALIGN
+
+        elif title_style == "simple_board" and num_cols >= 25:
+            # 简版看板样式：4个分组
+            # A1:L1 浅绿 + M1:P1 橙色 + Q1:R1 浅蓝 + S1:Y1 浅紫
+            ws.merge_cells("A1:L1")
+            title_cell = ws["A1"]
+            title_cell.value = title
+            title_cell.font = TITLE_FONT
+            title_cell.fill = FLOW_FILL  # 浅绿
+            title_cell.alignment = CENTER_ALIGN
+
+            ws.merge_cells("M1:P1")
+            flow_cell = ws["M1"]
+            flow_cell.value = "流量数据"
+            flow_cell.font = TITLE_FONT
+            flow_cell.fill = FLOW_TITLE_FILL  # 橙色
+            flow_cell.alignment = CENTER_ALIGN
+
+            ws.merge_cells("Q1:R1")
+            star_cell = ws["Q1"]
+            star_cell.value = "星级数据"
+            star_cell.font = TITLE_FONT
+            star_cell.fill = STAR_FILL  # 浅蓝
+            star_cell.alignment = CENTER_ALIGN
+
+            ws.merge_cells("S1:Y1")
+            review_cell = ws["S1"]
+            review_cell.value = "门店评价"
+            review_cell.font = TITLE_FONT
+            review_cell.fill = REVIEW_FILL  # 浅紫
+            review_cell.alignment = CENTER_ALIGN
+
+        elif title_style == "customer_flow" and num_cols >= 39:
+            # 客流分析样式：6个分组
+            # A1:P1 客流统计(橙色) + Q1:S1 引流用户数据(浅蓝) + T1:V1 在线咨询(浅绿)
+            # W1:AF1 门店交易情况(浅黄) + AG1:AK1 门店评价概览(浅紫) + AL1:AM1 星级概览(浅粉)
+            ws.merge_cells("A1:P1")
+            title_cell = ws["A1"]
+            title_cell.value = title
+            title_cell.font = TITLE_FONT
+            title_cell.fill = TITLE_FILL  # 橙色
+            title_cell.alignment = CENTER_ALIGN
+
+            ws.merge_cells("Q1:S1")
+            user_cell = ws["Q1"]
+            user_cell.value = "引流用户数据情况"
+            user_cell.font = TITLE_FONT
+            user_cell.fill = FLOW_USER_FILL  # 浅蓝
+            user_cell.alignment = CENTER_ALIGN
+
+            ws.merge_cells("T1:V1")
+            consult_cell = ws["T1"]
+            consult_cell.value = "在线咨询"
+            consult_cell.font = TITLE_FONT
+            consult_cell.fill = ONLINE_CONSULT_FILL  # 浅绿
+            consult_cell.alignment = CENTER_ALIGN
+
+            ws.merge_cells("W1:AF1")
+            trade_cell = ws["W1"]
+            trade_cell.value = "门店交易情况"
+            trade_cell.font = TITLE_FONT
+            trade_cell.fill = TRADE_FILL  # 浅黄
+            trade_cell.alignment = CENTER_ALIGN
+
+            ws.merge_cells("AG1:AK1")
+            review_cell = ws["AG1"]
+            review_cell.value = "门店评价概览"
+            review_cell.font = TITLE_FONT
+            review_cell.fill = REVIEW_OVERVIEW_FILL  # 浅紫
+            review_cell.alignment = CENTER_ALIGN
+
+            ws.merge_cells("AL1:AM1")
+            star_cell = ws["AL1"]
+            star_cell.value = "星级概览"
+            star_cell.font = TITLE_FONT
+            star_cell.fill = STAR_OVERVIEW_FILL  # 浅粉
+            star_cell.alignment = CENTER_ALIGN
+
+        elif title_style == "simple_board_old" and num_cols >= 13:
+            # 旧版简版看板样式（简版看板报表 - A1:I1 绿色，J-M 橙色）
             ws.merge_cells(f"A1:I1")
             title_cell = ws["A1"]
             title_cell.value = title
@@ -197,6 +305,22 @@ def get_shop_name(shop_id: str) -> str:
     return f"门店{shop_id}"
 
 
+def get_shop_city(shop_id: str) -> str:
+    """从门店映射表获取门店所在城市"""
+    from tuiguangtong.shop_search import load_mapping
+    mapping_data = load_mapping()
+    shops = mapping_data.get("shops", [])
+
+    if shop_id == "0":
+        return ""
+
+    for shop in shops:
+        for id_info in shop.get("ids", []):
+            if id_info.get("id") == shop_id:
+                return shop.get("city", "")
+    return ""
+
+
 # ============== 各板块数据获取 ==============
 
 def generate_tuiguangtong_summary(shop_ids: list, begin_date: str, end_date: str, platform: int):
@@ -215,20 +339,23 @@ def generate_tuiguangtong_summary(shop_ids: list, begin_date: str, end_date: str
 
     for shop_id in shop_ids:
         shop_name = get_shop_name(shop_id)
+        city = get_shop_city(shop_id)
         print(f"  [{shop_name}]...", end=" ")
         try:
+            # tuiguangtong get_metrics: (begin_date, end_date, shop_ids="0", platform=0, ...)
             metrics = client.get_metrics(
                 begin_date=begin_date,
                 end_date=end_date,
-                shop_ids=shop_id,
+                shop_ids=shop_id,  # 单个 shop_id 字符串
                 platform=platform
             )
-            generator.add_data_row(shop_id, shop_name, date_range, metrics)
+            # tuiguangtong add_data_row: (shop_id, shop_name, city, date_range, investment_days, metrics, competition)
+            generator.add_data_row(shop_id, shop_name, city, date_range, 0, metrics, {})
             print("成功")
             success_count += 1
         except Exception as e:
             print(f"失败 - {e}")
-            generator.add_data_row(shop_id, shop_name, date_range, [])
+            generator.add_data_row(shop_id, shop_name, city, date_range, 0, [], {})
             fail_count += 1
 
     return generator, success_count, fail_count
@@ -250,21 +377,22 @@ def generate_review_statistics_summary(shop_ids: list, begin_date: str, end_date
 
     for shop_id in shop_ids:
         shop_name = get_shop_name(shop_id)
+        platform_name = {0: "全平台", 1: "点评", 2: "美团"}.get(platform, str(platform))
         print(f"  [{shop_name}]...", end=" ")
         try:
             result = client.get_statistics(shop_id, begin_date, end_date, str(platform))
             if result.get("code") == 200:
                 statistics = client.parse_statistics(result)
-                generator.add_data_row(shop_id, shop_name, date_range, statistics)
+                generator.add_data_row(shop_id, shop_name, platform_name, date_range, statistics)
                 print(f"成功 - 累计评价 {statistics.get('累计评价数', 0)}")
                 success_count += 1
             else:
                 print(f"失败 - {result.get('msg')}")
-                generator.add_data_row(shop_id, shop_name, date_range, {})
+                generator.add_data_row(shop_id, shop_name, platform_name, date_range, {})
                 fail_count += 1
         except Exception as e:
             print(f"失败 - {e}")
-            generator.add_data_row(shop_id, shop_name, date_range, {})
+            generator.add_data_row(shop_id, shop_name, platform_name, date_range, {})
             fail_count += 1
 
     return generator, success_count, fail_count
@@ -413,9 +541,18 @@ def generate_customer_flow_summary(shop_ids: list, begin_date: str, end_date: st
     from customer_flow.client import CustomerFlowClient
     from customer_flow.excel_generator import ExcelGenerator
 
+    # flow_metrics 和 user_data_metrics 的 key 列表
+    FLOW_METRIC_KEYS = [
+        "exposure_count", "exposure_times", "visitor_count", "visit_times",
+        "exposure_visit_rate", "intention_count", "intention_rate",
+        "order_count", "retention_count", "favorites_count",
+        "new_favorites_count", "new_checkin_count"
+    ]
+    USER_DATA_METRIC_KEYS = ["traffic_user_count", "natural_user_count", "potential_user_count"]
+
     client = CustomerFlowClient()
     generator = ExcelGenerator()
-    generator._create_title_row("客流分析报表")
+    generator._create_title_row()
     generator._create_header_row()
 
     date_range = f"{begin_date}至{end_date}"
@@ -424,6 +561,7 @@ def generate_customer_flow_summary(shop_ids: list, begin_date: str, end_date: st
 
     for shop_id in shop_ids:
         shop_name = get_shop_name(shop_id)
+        city = get_shop_city(shop_id)
         print(f"  [{shop_name}]...", end=" ")
         try:
             metrics = client.get_metrics(
@@ -432,12 +570,18 @@ def generate_customer_flow_summary(shop_ids: list, begin_date: str, end_date: st
                 end_date=end_date,
                 platform=platform
             )
-            generator.add_data_row(shop_id, shop_name, date_range, metrics)
+            # 从扁平字典中提取 flow_metrics 和 user_data_metrics
+            flow_metrics = {k: metrics.get(k, "") for k in FLOW_METRIC_KEYS}
+            user_data_metrics = {k: metrics.get(k, "") for k in USER_DATA_METRIC_KEYS}
+            generator.add_data_row(
+                shop_id, shop_name, city, date_range,
+                flow_metrics, user_data_metrics, {}, {}, {}, {}
+            )
             print("成功")
             success_count += 1
         except Exception as e:
             print(f"失败 - {e}")
-            generator.add_data_row(shop_id, shop_name, date_range, {})
+            generator.add_data_row(shop_id, shop_name, city, date_range, {}, {}, {}, {}, {}, {})
             fail_count += 1
 
     return generator, success_count, fail_count
@@ -459,6 +603,7 @@ def generate_quantianzhan_summary(shop_ids: list, begin_date: str, end_date: str
 
     for shop_id in shop_ids:
         shop_name = get_shop_name(shop_id)
+        city = get_shop_city(shop_id)
         print(f"  [{shop_name}]...", end=" ")
         try:
             metrics = client.get_metrics(
@@ -467,18 +612,18 @@ def generate_quantianzhan_summary(shop_ids: list, begin_date: str, end_date: str
                 platform=str(platform),
                 shop_ids=shop_id
             )
-            generator.add_data_row(shop_id, shop_name, date_range, metrics)
+            generator.add_data_row(shop_id, shop_name, city, date_range, 0, metrics)
             print("成功")
             success_count += 1
         except Exception as e:
             print(f"失败 - {e}")
-            generator.add_data_row(shop_id, shop_name, date_range, [])
+            generator.add_data_row(shop_id, shop_name, city, date_range, 0, [])
             fail_count += 1
 
     return generator, success_count, fail_count
 
 
-def generate_simple_board_summary(shop_ids: list, begin_date: str, end_date: str, platform: int):
+def generate_simple_board_summary(shop_ids: list, begin_date: str, end_date: str, platform: int, review_platform: int = 2, date_scope: int = 2):
     """简版看板汇总数据"""
     from simple_board.client import SimpleBoardClient
     from simple_board.excel_generator import ExcelGenerator
@@ -494,6 +639,7 @@ def generate_simple_board_summary(shop_ids: list, begin_date: str, end_date: str
 
     for shop_id in shop_ids:
         shop_name = get_shop_name(shop_id)
+        city = get_shop_city(shop_id)
         print(f"  [{shop_name}]...", end=" ")
         try:
             metrics = client.get_metrics(
@@ -502,12 +648,20 @@ def generate_simple_board_summary(shop_ids: list, begin_date: str, end_date: str
                 shop_id=shop_id,
                 platform=str(platform)
             )
-            generator.add_data_row(shop_id, shop_name, date_range, metrics)
+            # 获取评论统计数据
+            review_stats = client.get_review_statistics(
+                shop_id=shop_id,
+                review_platform=str(review_platform),
+                date_scope=date_scope
+            )
+            platform_name = "美团" if review_platform == 2 else "点评"
+            date_scope_text = {1: "昨天", 2: "近7天", 3: "近30天"}.get(date_scope, "近7天")
+            generator.add_data_row(shop_id, shop_name, city, date_range, metrics, platform_name, date_scope_text, review_stats)
             print("成功")
             success_count += 1
         except Exception as e:
             print(f"失败 - {e}")
-            generator.add_data_row(shop_id, shop_name, date_range, {})
+            generator.add_data_row(shop_id, shop_name, city, date_range, {}, "美团", "近7天", {})
             fail_count += 1
 
     return generator, success_count, fail_count
@@ -517,14 +671,15 @@ def generate_simple_board_summary(shop_ids: list, begin_date: str, end_date: str
 
 def generate_summary_report(config: dict = None) -> str:
     """
-    生成汇总报表
+    生成汇总报表（4个Sheet：推广通、全站推广、简版看板、客流分析）
 
     Args:
         config: 可选，配置字典。如果为 None，则从 main_config.json 加载。
                格式: {
                    "门店列表": ["id1", "id2"],
                    "平台": 0,
-                   "门店评论平台": 1,
+                   "评论统计平台": 1,
+                   "评论统计日期范围": 2,
                    "日期范围": {"begin": "2026-01-01", "end": "2026-03-31"}
                }
 
@@ -540,7 +695,8 @@ def generate_summary_report(config: dict = None) -> str:
         config = load_main_config()
     shop_ids = config.get("门店列表", [])
     platform = config.get("平台", 0)
-    shop_review_platform = config.get("门店评论平台", 2)  # 门店评论专用平台
+    review_platform = config.get("评论统计平台", 2)
+    date_scope = config.get("评论统计日期范围", 2)
     date_range = config.get("日期范围", {})
     begin_date = date_range.get("begin")
     end_date = date_range.get("end")
@@ -548,35 +704,35 @@ def generate_summary_report(config: dict = None) -> str:
     print(f"\n配置信息:")
     print(f"  门店数量: {len(shop_ids)}")
     print(f"  平台: {platform}")
-    print(f"  门店评论平台: {shop_review_platform}")
+    print(f"  评论统计平台: {review_platform}")
+    print(f"  评论统计日期范围: {date_scope}")
     print(f"  日期: {begin_date} 至 {end_date}")
     print()
 
     # 创建汇总生成器
     summary_generator = SummaryExcelGenerator()
 
-    # 定义板块顺序和生成函数（使用标准名称）
+    # 定义板块顺序和生成函数（只保留4个）
     modules = [
         ("推广通", generate_tuiguangtong_summary),
-        ("评论统计", generate_review_statistics_summary),
-        ("星级评分", generate_star_rating_summary),
-        ("门店评论", generate_shop_review_summary),
-        ("在线咨询分析", generate_online_consultation_summary),
-        ("交易分析", generate_trade_analysis_summary),
-        ("客流统计", generate_customer_flow_summary),
         ("全站推广", generate_quantianzhan_summary),
         ("简版看板", generate_simple_board_summary),
+        ("付费版线上数据", generate_customer_flow_summary),
     ]
 
     # 遍历各板块
     for module_name, generate_func in modules:
         print(f"\n[{module_name}]")
         try:
-            # 门店评论使用专用平台
-            effective_platform = shop_review_platform if module_name == "门店评论" else platform
-            generator, success_count, fail_count = generate_func(
-                shop_ids, begin_date, end_date, effective_platform
-            )
+            # 根据板块特性调用不同的参数
+            if module_name == "简版看板":
+                generator, success_count, fail_count = generate_func(
+                    shop_ids, begin_date, end_date, platform, review_platform, date_scope
+                )
+            else:
+                generator, success_count, fail_count = generate_func(
+                    shop_ids, begin_date, end_date, platform
+                )
             # 从生成器获取数据（统一从worksheet读取）
             headers = generator._get_headers() if hasattr(generator, '_get_headers') else []
             widths = generator._get_widths() if hasattr(generator, '_get_widths') else []
@@ -585,14 +741,13 @@ def generate_summary_report(config: dict = None) -> str:
                 if any(cell is not None for cell in row):
                     data_rows.append(list(row))
 
-            # 根据板块特性设置特殊参数
-            extra_params = {}
-            if module_name == "门店评论":
-                # 门店评论需要更大的行高（评论内容换行）
-                extra_params["row_heights"] = [28, 22] + [78] * len(data_rows) if data_rows else [28, 22]
-            elif module_name == "简版看板":
-                # 简版看板使用分组标题样式
-                extra_params["title_style"] = "grouped"
+            # 根据板块特性设置 title_style
+            title_style_map = {
+                "推广通": "tuiguangtong",
+                "简版看板": "simple_board",
+                "付费版线上数据": "customer_flow",
+            }
+            title_style = title_style_map.get(module_name, "default")
 
             summary_generator.add_sheet_from_generator(
                 sheet_name=module_name,
@@ -601,7 +756,7 @@ def generate_summary_report(config: dict = None) -> str:
                 headers=headers,
                 widths=widths,
                 data_rows=data_rows,
-                **extra_params
+                title_style=title_style
             )
             print(f"  → 添加 Sheet 成功 (成功:{success_count}, 失败:{fail_count})")
         except Exception as e:
