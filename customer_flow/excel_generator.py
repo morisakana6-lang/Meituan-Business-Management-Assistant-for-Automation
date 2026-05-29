@@ -8,16 +8,16 @@
 客流分析板块，对应目录 customer_flow/
 
 === 输出格式 ===
-单门店：
-| 门店ID | 门店名称 | 时间 | 曝光人数 | ... |
-|--------|---------|------|---------|-----|
-| 1933643130 | 门店A | 2026-05-08至2026-05-14 | 2149 | ... |
-
-多门店：
-| 门店ID | 门店名称 | 时间 | 曝光人数 | ... |
-|--------|---------|------|---------|-----|
-| 1933643130 | 门店A | 2026-05-08至2026-05-14 | 2149 | ... |
-| 57904793 | 门店B | 2026-05-08至2026-05-14 | 137 | ... |
+39列，7个分组：
+| 分组 | 列范围 | 字段数 | 字段 |
+|------|--------|--------|------|
+| 基本信息 | A-D | 4 | 门店ID、推广门店、门店所在城市、时间 |
+| 客流统计报表 | E-P | 12 | 曝光人数、曝光次数、访问人数、访问次数、曝光访问转化率、意向转化人数、意向转化率、下单人数、留资人数、累计收藏人数、新增收藏人数、新增打卡人数 |
+| 引流用户数据 | Q-S | 3 | 美团引流顾客，自然到店顾客、潜在顾客 |
+| 在线咨询 | T-V | 3 | 在线咨询人数、在线咨询留资数、咨询留资转化率 |
+| 门店交易情况 | W-AF | 10 | 下单人数、下单券数、下单金额（原价）、核销人数、核销券数、核销金额（原价）、退款券数、退款金额（原价） |
+| 门店评价概览 | AG-AK | 5 | 新增评价数、新增差评数、差评回复率、新增好评数、累计评价数 |
+| 星级概览 | AL-AM | 2 | 点评星级、美团星级 |
 
 === 样式说明 ===
 - 第1行: 大标题，橙色背景
@@ -61,21 +61,43 @@ THIN_BORDER = Border(
 class ExcelGenerator:
     """客流分析Excel生成器"""
 
+    # 分组定义：(列范围, 标题名称, 背景颜色)
+    GROUPS = [
+        (1, 16, "客流统计报表", "FFFBE5D5"),      # 浅橙
+        (17, 19, "引流用户数据情况", "FFD6E8FF"),   # 浅蓝
+        (20, 22, "在线咨询", "FFD5F5DC"),          # 浅绿
+        (23, 32, "门店交易情况", "FFF0E68C"),       # 浅黄
+        (33, 37, "门店评价概览", "FFEEE8F5"),       # 浅紫
+        (38, 39, "星级概览", "FFFCE4EC"),          # 浅粉
+    ]
+
     def __init__(self):
         self.wb = Workbook()
         self.ws = self.wb.active
-        self.ws.title = "客流分析报表"
+        self.ws.title = "付费版线上数据"
 
-    def _create_title_row(self, title: str = "客流分析报表"):
-        """创建标题行（第1行）"""
-        headers = self._get_headers()
-        last_col = get_column_letter(len(headers))
-        self.ws.merge_cells(f"A1:{last_col}1")
-        title_cell = self.ws["A1"]
-        title_cell.value = title
-        title_cell.font = TITLE_FONT
-        title_cell.fill = TITLE_FILL
-        title_cell.alignment = CENTER_ALIGN
+    def _create_title_row(self):
+        """创建分组标题行（第1行）"""
+        # 创建分组标题
+        for start_col, end_col, group_name, color in self.GROUPS:
+            start_letter = get_column_letter(start_col)
+            end_letter = get_column_letter(end_col)
+
+            # 合并单元格
+            if start_col == end_col:
+                cell_ref = f"{start_letter}1"
+            else:
+                cell_ref = f"{start_letter}1:{end_letter}1"
+
+            self.ws.merge_cells(cell_ref)
+
+            # 设置分组标题
+            cell = self.ws.cell(row=1, column=start_col)
+            cell.value = group_name
+            cell.font = TITLE_FONT
+            cell.fill = PatternFill(start_color=color, end_color=color, fill_type="solid")
+            cell.alignment = CENTER_ALIGN
+
         self.ws.row_dimensions[1].height = 28
 
     def _create_header_row(self):
@@ -94,11 +116,14 @@ class ExcelGenerator:
         self.ws.row_dimensions[2].height = 22
 
     def _get_headers(self):
-        """获取表头列表"""
+        """获取表头列表（40列）"""
         return [
+            # 基本信息 (A-D, 4列) - 合并到客流统计报表分组
             "门店ID",
             "推广门店",
+            "门店所在城市",
             "时间",
+            # 客流统计报表 (E-P, 12列)
             "曝光人数（人）",
             "曝光次数（次）",
             "访问人数（人）",
@@ -111,20 +136,60 @@ class ExcelGenerator:
             "累计收藏人数（人）",
             "新增收藏人数（人）",
             "新增打卡人数（人）",
+            # 引流用户数据 (Q-S, 3列)
+            "美团引流顾客（人）",
+            "自然到店顾客（人）",
+            "潜在顾客（人）",
+            # 在线咨询 (T-V, 3列)
+            "在线咨询人数（人）",
+            "在线咨询留资数（人）",
+            "咨询留资转化率（%）",
+            # 门店交易情况 (W-AF, 10列)
+            "下单人数（人）",
+            "下单券数（张）",
+            "下单金额（原价）（元）",
+            "下单金额（元）",
+            "核销人数（人）",
+            "核销券数（张）",
+            "核销金额（原价）（元）",
+            "核销金额（元）",
+            "退款券数（张）",
+            "退款金额（原价）（元）",
+            # 门店评价概览 (AG-AK, 5列)
+            "新增评价数",
+            "新增差评数",
+            "差评回复率",
+            "新增好评数",
+            "累计评价数",
+            # 星级概览 (AL-AM, 2列)
+            "点评星级",
+            "美团星级",
         ]
 
     def _get_widths(self):
-        """获取列宽列表"""
-        return [17.25, 28.875, 25.375, 15.75, 17.25, 16.875, 16.375,
-                18.75, 16.125, 15.375, 13.125, 12.875, 14.625, 15.0, 15.25]
+        """获取列宽列表（40列）"""
+        return [
+            # 基本信息 (4列)
+            22.75, 30, 15, 22,
+            # 客流统计报表 (12列)
+            15, 15, 15, 15, 18, 16, 15, 13, 13, 16, 16, 15,
+            # 引流用户数据 (3列)
+            18, 18, 15,
+            # 在线咨询 (3列)
+            18, 18, 18,
+            # 门店交易情况 (10列)
+            13, 13, 20, 15, 13, 13, 20, 15, 13, 20,
+            # 门店评价概览 (5列)
+            12, 12, 12, 12, 12,
+            # 星级概览 (2列)
+            12, 12,
+        ]
 
     def _get_metric_value_float(self, metrics: Dict, metric_id: str) -> float:
         """从指标字典中获取指定指标的值（转换为浮点数）"""
         value = metrics.get(metric_id, "0")
         if isinstance(value, str):
-            # 先移除逗号、货币符号、百分号和空格
             value = value.replace(",", "").replace("￥", "").replace("¥", "").replace("$", "").replace("%", "").replace(" ", "")
-            # 处理带"万"、"亿"的单位
             if "万" in value:
                 value = value.replace("万", "")
                 try:
@@ -142,32 +207,81 @@ class ExcelGenerator:
         except (ValueError, TypeError):
             return 0.0
 
-    def add_data_row(self, shop_id: str, shop_name: str, date_range: str, metrics: Dict):
+    def add_data_row(
+        self,
+        shop_id: str,
+        shop_name: str,
+        shop_city: str,
+        date_range: str,
+        flow_metrics: Dict,
+        user_data_metrics: Dict,
+        consultation_metrics: Dict,
+        trade_metrics: Dict,
+        review_metrics: Dict,
+        star_metrics: Dict,
+    ):
         """
         添加一行数据
 
         Args:
             shop_id: 门店ID
             shop_name: 门店名称
+            shop_city: 门店所在城市
             date_range: 时间范围
-            metrics: 指标字典
+            flow_metrics: 客流统计数据
+            user_data_metrics: 引流用户数据
+            consultation_metrics: 在线咨询数据
+            trade_metrics: 交易分析数据
+            review_metrics: 评论统计数据
+            star_metrics: 星级评分数据
         """
         row_data = [
+            # 基本信息 (4列)
             shop_id,
             shop_name,
+            shop_city,
             date_range,
-            self._get_metric_value_float(metrics, "exposure_count"),
-            self._get_metric_value_float(metrics, "exposure_times"),
-            self._get_metric_value_float(metrics, "visitor_count"),
-            self._get_metric_value_float(metrics, "visit_times"),
-            self._get_metric_value_float(metrics, "exposure_visit_rate"),
-            self._get_metric_value_float(metrics, "intention_count"),
-            self._get_metric_value_float(metrics, "intention_rate"),
-            self._get_metric_value_float(metrics, "order_count"),
-            self._get_metric_value_float(metrics, "retention_count"),
-            self._get_metric_value_float(metrics, "favorites_count"),
-            self._get_metric_value_float(metrics, "new_favorites_count"),
-            self._get_metric_value_float(metrics, "new_checkin_count"),
+            # 客流统计报表 (12列)
+            self._get_metric_value_float(flow_metrics, "exposure_count"),
+            self._get_metric_value_float(flow_metrics, "exposure_times"),
+            self._get_metric_value_float(flow_metrics, "visitor_count"),
+            self._get_metric_value_float(flow_metrics, "visit_times"),
+            self._get_metric_value_float(flow_metrics, "exposure_visit_rate"),
+            self._get_metric_value_float(flow_metrics, "intention_count"),
+            self._get_metric_value_float(flow_metrics, "intention_rate"),
+            self._get_metric_value_float(flow_metrics, "order_count"),
+            self._get_metric_value_float(flow_metrics, "retention_count"),
+            self._get_metric_value_float(flow_metrics, "favorites_count"),
+            self._get_metric_value_float(flow_metrics, "new_favorites_count"),
+            self._get_metric_value_float(flow_metrics, "new_checkin_count"),
+            # 引流用户数据 (3列)
+            self._get_metric_value_float(user_data_metrics, "traffic_user_count"),
+            self._get_metric_value_float(user_data_metrics, "natural_user_count"),
+            self._get_metric_value_float(user_data_metrics, "potential_user_count"),
+            # 在线咨询 (3列)
+            self._get_metric_value_float(consultation_metrics, "在线咨询人数"),
+            self._get_metric_value_float(consultation_metrics, "在线咨询留资数"),
+            consultation_metrics.get("咨询留资转化率", ""),
+            # 门店交易情况 (10列)
+            self._get_metric_value_float(trade_metrics, "order_person_count"),
+            self._get_metric_value_float(trade_metrics, "order_ticket_count"),
+            self._get_metric_value_float(trade_metrics, "order_original_amount"),
+            self._get_metric_value_float(trade_metrics, "order_amount"),
+            self._get_metric_value_float(trade_metrics, "redeem_person_count"),
+            self._get_metric_value_float(trade_metrics, "redeem_ticket_count"),
+            self._get_metric_value_float(trade_metrics, "redeem_original_amount"),
+            self._get_metric_value_float(trade_metrics, "redeem_amount"),
+            self._get_metric_value_float(trade_metrics, "refund_ticket_count"),
+            self._get_metric_value_float(trade_metrics, "refund_original_amount"),
+            # 门店评价概览 (5列)
+            self._get_metric_value_float(review_metrics, "新增评价数"),
+            self._get_metric_value_float(review_metrics, "新增差评数"),
+            review_metrics.get("差评回复率", ""),
+            self._get_metric_value_float(review_metrics, "新增好评数"),
+            self._get_metric_value_float(review_metrics, "累计评价数"),
+            # 星级概览 (2列)
+            star_metrics.get("点评星级", ""),
+            star_metrics.get("美团星级", ""),
         ]
 
         row_idx = self.ws.max_row + 1
@@ -183,7 +297,6 @@ class ExcelGenerator:
 
     def save(self, filepath: str):
         """保存Excel文件"""
-        # 检查文件是否被占用
         if os.path.exists(filepath):
             try:
                 with open(filepath, 'a'):
@@ -210,8 +323,9 @@ def generate_report(client, shop_ids: list, begin_date: str, end_date: str, plat
     Returns:
         生成的 Excel 文件路径
     """
-    # 加载门店映射表
+    from customer_flow.client import get_shop_info
     from tuiguangtong.shop_search import load_mapping
+
     mapping_data = load_mapping()
     shops = mapping_data.get("shops", [])
 
@@ -226,37 +340,100 @@ def generate_report(client, shop_ids: list, begin_date: str, end_date: str, plat
 
     generator = ExcelGenerator()
 
-    # 判断单门店还是多门店
     is_multi_shop = len(shop_ids) > 1
-    if is_multi_shop:
-        generator._create_title_row("客流分析报表（多门店）")
-    else:
-        generator._create_title_row("客流分析报表")
-
-    generator._create_header_row()
+    generator._create_title_row()  # 创建分组标题行
+    generator._create_header_row()  # 创建表头行
 
     date_range = f"{begin_date}至{end_date}"
     print(f"开始生成客流分析报表: {begin_date} ~ {end_date}")
 
-    # 遍历每个门店查询数据
     for shop_id in shop_ids:
         shop_name = get_shop_name(shop_id)
-        print(f"  查询门店: {shop_name}...")
+        shop_info = get_shop_info(shop_id)
+        shop_city = shop_info.get("city", "")
+        print(f"  查询门店: {shop_name} ({shop_city})...")
 
         try:
-            metrics = client.get_metrics(
+            # 获取客流统计数据
+            flow_metrics = client.get_metrics(
                 shop_id=shop_id,
                 platform=str(platform),
                 begin_date=begin_date,
                 end_date=end_date
             )
-            generator.add_data_row(shop_id, shop_name, date_range, metrics)
-            print(f"    {shop_name}: 获取成功")
-        except Exception as e:
-            print(f"    {shop_name}: 获取失败 - {e}")
-            generator.add_data_row(shop_id, shop_name, date_range, {})
 
-    # 保存文件
+            # 获取评论统计数据（旧版API）
+            review_metrics = client.get_review_statistics(
+                shop_id=shop_id,
+                begin_date=begin_date,
+                end_date=end_date,
+                platform=str(platform)
+            )
+
+            # 获取星级评分数据
+            star_metrics = client.get_star_rating(
+                shop_id=shop_id,
+                begin_date=begin_date,
+                end_date=end_date,
+                platform=str(platform)
+            )
+
+            # 获取在线咨询数据
+            consultation_metrics = client.get_online_consultation(
+                shop_id=shop_id,
+                begin_date=begin_date,
+                end_date=end_date,
+                platform=str(platform)
+            )
+
+            # 获取交易分析数据
+            trade_metrics = client.get_trade_analysis(
+                shop_id=shop_id,
+                begin_date=begin_date,
+                end_date=end_date,
+                platform=str(platform)
+            )
+
+            # 从 flow_metrics 中提取引流用户数据
+            user_data_metrics = {
+                "traffic_user_count": flow_metrics.get("traffic_user_count", "0"),
+                "natural_user_count": flow_metrics.get("natural_user_count", "0"),
+                "potential_user_count": flow_metrics.get("potential_user_count", "0"),
+            }
+
+            generator.add_data_row(
+                shop_id=shop_id,
+                shop_name=shop_name,
+                shop_city=shop_city,
+                date_range=date_range,
+                flow_metrics=flow_metrics,
+                user_data_metrics=user_data_metrics,
+                consultation_metrics=consultation_metrics,
+                trade_metrics=trade_metrics,
+                review_metrics=review_metrics,
+                star_metrics=star_metrics,
+            )
+            print(f"    {shop_name}: 获取成功")
+
+        except Exception as e:
+            error_msg = str(e)
+            if "noRightsShop" in error_msg:
+                print(f"    {shop_name}: 无权限访问，已跳过")
+            else:
+                print(f"    {shop_name}: 获取失败 - {e}")
+                generator.add_data_row(
+                    shop_id=shop_id,
+                    shop_name=shop_name,
+                    shop_city=shop_city,
+                    date_range=date_range,
+                    flow_metrics={},
+                    user_data_metrics={},
+                    consultation_metrics={},
+                    trade_metrics={},
+                    review_metrics={},
+                    star_metrics={},
+                )
+
     output_dir = os.path.join(_CURRENT_DIR, "reports")
     os.makedirs(output_dir, exist_ok=True)
 
@@ -296,7 +473,6 @@ if __name__ == "__main__":
         print("错误: shop_config.json 中未设置 search_key")
         exit(1)
 
-    # 解析 search_key（支持多种格式）
     if isinstance(search_key, list):
         shop_ids = search_key
     elif isinstance(search_key, str):
@@ -307,7 +483,6 @@ if __name__ == "__main__":
     else:
         shop_ids = [str(search_key)]
 
-    # 获取门店信息
     if len(shop_ids) == 1:
         shop_name, shop_id = resolve_shop(search_key if isinstance(search_key, str) else shop_ids[0], platform)
         print(f"已选择门店: {shop_name}")

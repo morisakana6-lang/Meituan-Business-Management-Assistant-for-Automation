@@ -5,21 +5,14 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>美团经营宝 - 汇总报表</title>
     <style>
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-        }
+        * { margin: 0; padding: 0; box-sizing: border-box; }
         body {
             font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
             background: #f5f6fa;
             min-height: 100vh;
             padding: 20px;
         }
-        .container {
-            max-width: 900px;
-            margin: 0 auto;
-        }
+        .container { max-width: 1200px; margin: 0 auto; }
         .header {
             background: linear-gradient(135deg, #ff6b35 0%, #ff8e53 100%);
             color: white;
@@ -27,452 +20,716 @@
             border-radius: 12px 12px 0 0;
             text-align: center;
         }
-        .header h1 {
-            font-size: 28px;
-            font-weight: 600;
-            margin-bottom: 8px;
-        }
-        .header .subtitle {
-            opacity: 0.9;
-            font-size: 14px;
-        }
+        .header h1 { font-size: 28px; font-weight: 600; margin-bottom: 8px; }
+        .header .subtitle { opacity: 0.9; font-size: 14px; }
         .card {
             background: white;
             border-radius: 0 0 12px 12px;
             padding: 30px;
             box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
         }
-        .form-group {
-            margin-bottom: 24px;
-        }
-        .form-group label {
+        .form-group { margin-bottom: 24px; }
+        .form-group > label {
             display: block;
             font-weight: 500;
             color: #333;
             margin-bottom: 8px;
             font-size: 14px;
         }
-        .form-row {
-            display: grid;
-            grid-template-columns: 1fr 1fr;
-            gap: 20px;
+        .form-row { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
+        .platform-group { display: flex; gap: 12px; flex-wrap: wrap; }
+        .platform-option { flex: 1; min-width: 100px; }
+        .platform-option input { display: none; }
+        .platform-option label {
+            display: block; padding: 10px 16px;
+            border: 1px solid #e0e0e0; border-radius: 8px;
+            text-align: center; cursor: pointer;
+            transition: all 0.2s; font-size: 14px; color: #666; margin-bottom: 0;
         }
-        .shop-list {
-            display: flex;
-            flex-direction: column;
-            gap: 8px;
+        .platform-option input:checked + label {
+            border-color: #ff6b35; background: #fff5f2; color: #ff6b35; font-weight: 500;
+        }
+        .platform-option label:hover { border-color: #ff8e53; }
+
+        /* ========== 门店列表（手动输入） ========== */
+        .shop-list { display: flex; flex-direction: column; gap: 8px; }
+        .shop-item { display: flex; gap: 8px; align-items: center; padding-left: 0 !important; }
+        .shop-item input {
+            flex: 1; padding: 10px 14px 10px 15px; border: 1px solid #e0e0e0;
+            border-radius: 8px; font-size: 14px;
+        }
+        .shop-item input:focus { outline: none; border-color: #ff6b35; box-shadow: 0 0 0 3px rgba(255, 107, 53, 0.1); }
+        .btn-remove {
+            width: 32px; height: 32px; border: none;
+            background: #ff4d4f; color: white;
+            border-radius: 6px; cursor: pointer; font-size: 16px;
+            display: flex; align-items: center; justify-content: center;
+        }
+        .btn-remove:hover { background: #ff7875; }
+        .btn-add {
+            padding: 8px 16px; border: 1px dashed #ccc; background: #fafafa;
+            color: #666; border-radius: 6px; cursor: pointer; font-size: 13px; transition: all 0.2s;
+        }
+        .btn-add:hover { border-color: #ff6b35; color: #ff6b35; }
+
+        /* ========== 门店选择器 ========== */
+        .shop-selector { position: relative; }
+        .shop-trigger {
+            display: flex; flex-wrap: wrap; gap: 6px;
+            min-height: 42px; padding: 6px 10px;
+            border: 1px solid #e0e0e0; border-radius: 8px;
+            background: white; cursor: pointer; align-items: center;
+        }
+        .shop-trigger:hover { border-color: #ff8e53; }
+        .shop-trigger.active { border-color: #ff6b35; box-shadow: 0 0 0 3px rgba(255, 107, 53, 0.1); }
+        .shop-tag {
+            display: inline-flex; align-items: center; gap: 4px;
+            padding: 2px 8px; background: #fff5f2;
+            border: 1px solid #ffccc7; border-radius: 4px;
+            font-size: 12px; color: #ff6b35;
+        }
+        .shop-tag .remove { cursor: pointer; font-weight: bold; color: #ff6b35; }
+        .shop-tag .remove:hover { color: #ff4d4f; }
+        .shop-placeholder { color: #999; font-size: 14px; }
+        .shop-count { padding: 2px 8px; background: #f0f0f0; border-radius: 4px; font-size: 12px; color: #666; }
+        .shop-clear-all {
+            margin-left: auto; padding: 2px 8px;
+            background: none; border: none; color: #999; cursor: pointer; font-size: 14px;
+        }
+        .shop-clear-all:hover { color: #ff4d4f; }
+        .shop-dropdown {
+            display: none; position: absolute; top: 100%; left: 0; right: 0;
+            margin-top: 4px; background: white;
+            border: 1px solid #e0e0e0; border-radius: 8px;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.15); z-index: 1000;
+            min-height: 400px; max-height: 500px;
+        }
+        .shop-dropdown.show { display: flex; }
+        .shop-dropdown-col {
+            flex: 1; border-right: 1px solid #f0f0f0;
+            overflow-y: auto; max-height: 500px;
+        }
+        .shop-dropdown-col:last-child { border-right: none; }
+        .shop-dropdown-col-title {
+            padding: 12px 16px; font-weight: 600; font-size: 13px;
+            color: #666; background: #fafafa;
+            border-bottom: 1px solid #f0f0f0; position: sticky; top: 0; z-index: 1;
         }
         .shop-item {
-            display: flex;
-            gap: 8px;
-            align-items: center;
+            padding: 8px 16px; cursor: pointer; font-size: 13px;
+            color: #333; display: flex; align-items: center; gap: 8px; transition: background 0.15s;
         }
-        .shop-item input {
-            flex: 1;
+        .shop-item:hover { background: #f5f5f5; }
+        .shop-item.selected { background: #fff5f2; color: #ff6b35; }
+        .shop-checkbox {
+            width: 16px; height: 16px;
+            border: 1px solid #d9d9d9; border-radius: 3px;
+            display: flex; align-items: center; justify-content: center;
+            flex-shrink: 0; transition: all 0.15s;
+        }
+        .shop-checkbox.checked { background: #ff6b35; border-color: #ff6b35; color: white; }
+        .shop-checkbox.indeterminate { background: #ff6b35; border-color: #ff6b35; }
+        .shop-checkbox.indeterminate::after { content: '—'; color: white; font-size: 12px; font-weight: bold; }
+        .province-item {
+            padding: 10px 16px; cursor: pointer; font-size: 13px;
+            display: flex; align-items: center; gap: 8px; transition: background 0.15s;
+            border-bottom: 1px solid #f5f5f5;
+        }
+        .province-item:hover { background: #f5f5f5; }
+        .shop-search-wrapper {
+            padding: 8px 12px; border-bottom: 1px solid #f0f0f0; position: sticky; top: 0; background: white;
+        }
+        .shop-search-input {
+            width: 100%; padding: 8px 12px; border: 1px solid #e0e0e0;
+            border-radius: 6px; font-size: 13px; box-sizing: border-box;
+        }
+        .shop-search-input:focus { outline: none; border-color: #ff6b35; }
+        .shop-list-wrapper { overflow-y: auto; max-height: 380px; }
+        .shop-load-tip {
+            padding: 12px; text-align: center; font-size: 12px; color: #999;
+            cursor: pointer;
+        }
+        .shop-load-tip:hover { color: #ff6b35; }
+        .shop-dropdown-footer {
+            padding: 12px 16px; border-top: 1px solid #f0f0f0;
+            display: flex; justify-content: space-between; align-items: center;
+            background: #fafafa; position: sticky; bottom: 0;
+        }
+        .shop-dropdown-footer .count { font-size: 13px; color: #666; }
+        .shop-dropdown-footer .btn-confirm {
+            padding: 6px 16px; background: #ff6b35; color: white;
+            border: none; border-radius: 4px; font-size: 13px; cursor: pointer;
+        }
+        .shop-dropdown-footer .btn-confirm:hover { background: #ff8e53; }
+
+        /* ========== 日期选择器 ========== */
+        .date-range-group { display: flex; gap: 12px; flex-wrap: wrap; }
+        .radio-card { flex: 1; min-width: 100px; }
+        .radio-card input { display: none; }
+        .radio-card label {
+            display: block; padding: 12px 16px; border: 1px solid #e0e0e0;
+            border-radius: 8px; text-align: center; cursor: pointer;
+            transition: all 0.2s; font-size: 14px; color: #666;
+        }
+        .radio-card input:checked + label {
+            border-color: #ff6b35; background: #fff5f2; color: #ff6b35; font-weight: 500;
+        }
+        .radio-card label:hover { border-color: #ff8e53; }
+        .custom-date { flex: 2; min-width: 300px; display: none; gap: 16px; align-items: center; }
+        .custom-date.show { display: flex; }
+        .custom-date .date-display {
+            flex: 1; padding: 12px 16px; border: 1px solid #e0e0e0;
+            border-radius: 8px; background: #fafafa; text-align: center;
+            color: #666; font-size: 14px; cursor: pointer; transition: all 0.2s;
+        }
+        .custom-date .date-display:hover { border-color: #ff8e53; }
+        .custom-date .date-display.active {
+            border-color: #ff6b35; background: #fff5f2; color: #ff6b35; font-weight: 500;
+        }
+        .custom-date .date-display .hint { font-size: 12px; color: #999; font-weight: normal; }
+        .custom-date .calendar-wrapper { position: relative; }
+        .calendar {
+            display: none; position: absolute; top: 100%; left: 0;
+            background: white; border: 1px solid #e0e0e0;
+            border-radius: 8px; box-shadow: 0 4px 20px rgba(0,0,0,0.15);
+            padding: 16px; z-index: 100; min-width: 280px;
+        }
+        .calendar.show { display: block; }
+        .calendar-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px; }
+        .calendar-header .month { font-weight: 600; color: #333; min-width: 80px; text-align: center; }
+        .calendar-header button {
+            background: none; border: none; cursor: pointer;
+            padding: 4px 8px; color: #666; font-size: 16px; transition: color 0.2s;
+        }
+        .calendar-header button:hover { color: #ff6b35; }
+        .calendar-weekdays {
+            display: grid; grid-template-columns: repeat(7, 1fr);
+            text-align: center; font-size: 12px; color: #999; margin-bottom: 8px;
+        }
+        .calendar-days { display: grid; grid-template-columns: repeat(7, 1fr); gap: 2px; }
+        .calendar-day {
+            padding: 8px; text-align: center; cursor: pointer;
+            border-radius: 4px; font-size: 13px; color: #333; transition: all 0.2s;
+        }
+        .calendar-day:hover { background: #f0f0f0; }
+        .calendar-day.disabled { color: #ccc; cursor: not-allowed; }
+        .calendar-day.disabled:hover { background: none; }
+        .calendar-day.selected { background: #ff6b35; color: white; }
+        .calendar-day.selected:hover { background: #ff8e53; }
+        .calendar-day.in-range { background: #fff5f2; color: #ff6b35; }
+        .btn-submit {
+            width: 100%; padding: 14px;
+            background: linear-gradient(135deg, #ff6b35 0%, #ff8e53 100%);
+            color: white; border: none; border-radius: 8px;
+            font-size: 16px; font-weight: 600; cursor: pointer;
+            transition: transform 0.2s, box-shadow 0.2s; margin-top: 10px;
+        }
+        .btn-submit:hover { transform: translateY(-1px); box-shadow: 0 4px 15px rgba(255, 107, 53, 0.4); }
+        .btn-submit:active { transform: translateY(0); }
+        .btn-submit:disabled { background: #ccc; cursor: not-allowed; transform: none; box-shadow: none; }
+        .loading { display: none; text-align: center; padding: 40px; }
+        .loading.show { display: block; }
+        .spinner {
+            width: 40px; height: 40px; border: 3px solid #f0f0f0;
+            border-top-color: #ff6b35; border-radius: 50%;
+            animation: spin 0.8s linear infinite; margin: 0 auto 16px;
+        }
+        @keyframes spin { to { transform: rotate(360deg); } }
+        .error { display: none; background: #fff2f0; border: 1px solid #ffccc7; color: #ff4d4f; padding: 16px; border-radius: 8px; margin-top: 20px; }
+        .error.show { display: block; }
+        .success { display: none; background: #f6ffed; border: 1px solid #b7eb8f; color: #52c41a; padding: 16px; border-radius: 8px; margin-top: 20px; }
+
+        /* 门店映射表样式 */
+        .shop-mapping-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 16px;
+            padding: 12px 16px;
+            background: #f5f5f5;
+            border-radius: 8px;
+        }
+        .shop-mapping-info {
+            color: #666;
+            font-size: 14px;
+        }
+        .btn-refresh {
+            padding: 8px 20px;
+            background: #1890ff;
+            color: white;
+            border: none;
+            border-radius: 6px;
+            font-size: 14px;
+            cursor: pointer;
+        }
+        .btn-refresh:hover {
+            background: #40a9ff;
+        }
+        .btn-refresh:disabled {
+            background: #ccc;
+            cursor: not-allowed;
+        }
+        .shop-mapping-table-wrapper {
+            max-height: 500px;
+            overflow-y: auto;
+            border: 1px solid #e8e8e8;
+            border-radius: 8px;
+        }
+        .shop-mapping-table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 13px;
+        }
+        .shop-mapping-table th {
+            background: #fafafa;
+            padding: 12px 8px;
+            text-align: left;
+            font-weight: 500;
+            color: #333;
+            border-bottom: 1px solid #e8e8e8;
+            position: sticky;
+            top: 0;
+            z-index: 1;
+        }
+        .shop-mapping-table td {
+            padding: 10px 8px;
+            border-bottom: 1px solid #f0f0f0;
+            color: #666;
+        }
+        .shop-mapping-table tr:hover td {
+            background: #fafafa;
+        }
+        .shop-mapping-table td:first-child {
+            color: #999;
+            width: 60px;
+            text-align: center;
+        }
+        .shop-mapping-table td:nth-child(2) {
+            color: #333;
+            font-weight: 500;
+            max-width: 300px;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+        }
+        .shop-mapping-table td:nth-child(4),
+        .shop-mapping-table td:nth-child(5) {
+            font-family: 'Consolas', 'Monaco', monospace;
+            font-size: 12px;
+        }
+        .loading-cell {
+            text-align: center;
+            color: #999;
+            padding: 40px !important;
+        }
+        .shop-mapping-pagination {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            gap: 16px;
+            margin-top: 16px;
+        }
+        .page-btn {
+            padding: 6px 16px;
+            background: white;
+            border: 1px solid #d9d9d9;
+            border-radius: 4px;
+            font-size: 13px;
+            cursor: pointer;
+        }
+        .page-btn:hover:not(:disabled) {
+            color: #1890ff;
+            border-color: #1890ff;
+        }
+        .page-btn:disabled {
+            color: #ccc;
+            cursor: not-allowed;
+        }
+        .page-info {
+            color: #666;
+            font-size: 13px;
+        }
+        .success.show { display: block; }
+        .tips { font-size: 12px; color: #999; margin-top: 6px; }
+        .back-link { display: inline-block; margin-bottom: 16px; color: #ff6b35; text-decoration: none; font-size: 14px; }
+        .back-link:hover { text-decoration: underline; }
+
+        /* ========== Tab切换 ========== */
+        .tab-nav {
+            display: flex;
+            gap: 0;
+            margin-bottom: 0;
+            border-bottom: 2px solid #f0f0f0;
+        }
+        .tab-btn {
+            padding: 12px 24px;
+            border: none;
+            background: none;
+            cursor: pointer;
+            font-size: 15px;
+            color: #666;
+            border-bottom: 2px solid transparent;
+            margin-bottom: -2px;
+            transition: all 0.2s;
+        }
+        .tab-btn:hover { color: #ff6b35; }
+        .tab-btn.active {
+            color: #ff6b35;
+            border-bottom-color: #ff6b35;
+            font-weight: 600;
+        }
+        .tab-content { display: none; }
+        .tab-content.active { display: block; }
+
+        /* ========== 下拉选择器 ========== */
+        .select-wrapper { position: relative; }
+        .select-trigger {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
             padding: 10px 14px;
             border: 1px solid #e0e0e0;
             border-radius: 8px;
+            background: white;
+            cursor: pointer;
             font-size: 14px;
-        }
-        .shop-item input:focus {
-            outline: none;
-            border-color: #ff6b35;
-            box-shadow: 0 0 0 3px rgba(255, 107, 53, 0.1);
-        }
-        .btn-remove {
-            width: 32px;
-            height: 32px;
-            border: none;
-            background: #ff4d4f;
-            color: white;
-            border-radius: 6px;
-            cursor: pointer;
-            font-size: 16px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-        }
-        .btn-remove:hover {
-            background: #ff7875;
-        }
-        .btn-add {
-            padding: 8px 16px;
-            border: 1px dashed #ccc;
-            background: #fafafa;
-            color: #666;
-            border-radius: 6px;
-            cursor: pointer;
-            font-size: 13px;
+            color: #333;
+            min-width: 120px;
             transition: all 0.2s;
         }
-        .btn-add:hover {
-            border-color: #ff6b35;
-            color: #ff6b35;
+        .select-trigger:hover { border-color: #ff8e53; }
+        .select-trigger.open { border-color: #ff6b35; box-shadow: 0 0 0 3px rgba(255, 107, 53, 0.1); }
+        .select-arrow {
+            margin-left: 8px;
+            width: 0;
+            height: 0;
+            border-left: 5px solid transparent;
+            border-right: 5px solid transparent;
+            border-top: 6px solid #999;
+            transition: transform 0.2s;
         }
-        .platform-group {
-            display: flex;
-            gap: 12px;
-            flex-wrap: wrap;
-        }
-        .platform-option {
-            flex: 1;
-            min-width: 100px;
-        }
-        .platform-option input {
-            display: none;
-        }
-        .platform-option label {
-            display: block;
-            padding: 10px 16px;
-            border: 1px solid #e0e0e0;
-            border-radius: 8px;
-            text-align: center;
-            cursor: pointer;
-            transition: all 0.2s;
-            font-size: 14px;
-            color: #666;
-            margin-bottom: 0;
-        }
-        .platform-option input:checked + label {
-            border-color: #ff6b35;
-            background: #fff5f2;
-            color: #ff6b35;
-            font-weight: 500;
-        }
-        .platform-option label:hover {
-            border-color: #ff8e53;
-        }
-        .date-range-group {
-            display: flex;
-            gap: 12px;
-            flex-wrap: wrap;
-        }
-        .radio-card {
-            flex: 1;
-            min-width: 100px;
-        }
-        .radio-card input {
-            display: none;
-        }
-        .radio-card label {
-            display: block;
-            padding: 12px 16px;
-            border: 1px solid #e0e0e0;
-            border-radius: 8px;
-            text-align: center;
-            cursor: pointer;
-            transition: all 0.2s;
-            font-size: 14px;
-            color: #666;
-        }
-        .radio-card input:checked + label {
-            border-color: #ff6b35;
-            background: #fff5f2;
-            color: #ff6b35;
-            font-weight: 500;
-        }
-        .radio-card label:hover {
-            border-color: #ff8e53;
-        }
-        .custom-date {
-            flex: 2;
-            min-width: 300px;
-            display: none;
-            gap: 16px;
-            align-items: center;
-        }
-        .custom-date.show {
-            display: flex;
-        }
-        .custom-date .date-display {
-            flex: 1;
-            padding: 12px 16px;
-            border: 1px solid #e0e0e0;
-            border-radius: 8px;
-            background: #fafafa;
-            text-align: center;
-            color: #666;
-            font-size: 14px;
-            cursor: pointer;
-            transition: all 0.2s;
-        }
-        .custom-date .date-display:hover {
-            border-color: #ff8e53;
-        }
-        .custom-date .date-display.active {
-            border-color: #ff6b35;
-            background: #fff5f2;
-            color: #ff6b35;
-            font-weight: 500;
-        }
-        .custom-date .date-display .hint {
-            font-size: 12px;
-            color: #999;
-            font-weight: normal;
-        }
-        .custom-date .calendar-wrapper {
-            position: relative;
-        }
-        .calendar {
+        .select-trigger.open .select-arrow { transform: rotate(180deg); border-top-color: #ff6b35; }
+        .select-dropdown {
             display: none;
             position: absolute;
             top: 100%;
             left: 0;
+            right: 0;
+            margin-top: 4px;
             background: white;
             border: 1px solid #e0e0e0;
             border-radius: 8px;
             box-shadow: 0 4px 20px rgba(0,0,0,0.15);
-            padding: 16px;
             z-index: 100;
-            min-width: 280px;
+            overflow: hidden;
         }
-        .calendar.show {
-            display: block;
-        }
-        .calendar-header {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            margin-bottom: 12px;
-        }
-        .calendar-header .month {
-            font-weight: 600;
-            color: #333;
-            min-width: 80px;
-            text-align: center;
-        }
-        .calendar-header button {
-            background: none;
-            border: none;
+        .select-dropdown.show { display: block; }
+        .select-option {
+            padding: 10px 14px;
             cursor: pointer;
-            padding: 4px 8px;
-            color: #666;
-            font-size: 16px;
-            transition: color 0.2s;
-        }
-        .calendar-header button:hover {
-            color: #ff6b35;
-        }
-        .calendar-weekdays {
-            display: grid;
-            grid-template-columns: repeat(7, 1fr);
-            text-align: center;
-            font-size: 12px;
-            color: #999;
-            margin-bottom: 8px;
-        }
-        .calendar-days {
-            display: grid;
-            grid-template-columns: repeat(7, 1fr);
-            gap: 2px;
-        }
-        .calendar-day {
-            padding: 8px;
-            text-align: center;
-            cursor: pointer;
-            border-radius: 4px;
-            font-size: 13px;
-            color: #333;
-            transition: all 0.2s;
-        }
-        .calendar-day:hover {
-            background: #f0f0f0;
-        }
-        .calendar-day.disabled {
-            color: #ccc;
-            cursor: not-allowed;
-        }
-        .calendar-day.disabled:hover {
-            background: none;
-        }
-        .calendar-day.selected {
-            background: #ff6b35;
-            color: white;
-        }
-        .calendar-day.selected:hover {
-            background: #ff8e53;
-        }
-        .calendar-day.in-range {
-            background: #fff5f2;
-            color: #ff6b35;
-        }
-        .btn-submit {
-            width: 100%;
-            padding: 14px;
-            background: linear-gradient(135deg, #ff6b35 0%, #ff8e53 100%);
-            color: white;
-            border: none;
-            border-radius: 8px;
-            font-size: 16px;
-            font-weight: 600;
-            cursor: pointer;
-            transition: transform 0.2s, box-shadow 0.2s;
-            margin-top: 10px;
-        }
-        .btn-submit:hover {
-            transform: translateY(-1px);
-            box-shadow: 0 4px 15px rgba(255, 107, 53, 0.4);
-        }
-        .btn-submit:active {
-            transform: translateY(0);
-        }
-        .btn-submit:disabled {
-            background: #ccc;
-            cursor: not-allowed;
-            transform: none;
-            box-shadow: none;
-        }
-        .loading {
-            display: none;
-            text-align: center;
-            padding: 40px;
-        }
-        .loading.show {
-            display: block;
-        }
-        .spinner {
-            width: 40px;
-            height: 40px;
-            border: 3px solid #f0f0f0;
-            border-top-color: #ff6b35;
-            border-radius: 50%;
-            animation: spin 0.8s linear infinite;
-            margin: 0 auto 16px;
-        }
-        @keyframes spin {
-            to { transform: rotate(360deg); }
-        }
-        .error {
-            display: none;
-            background: #fff2f0;
-            border: 1px solid #ffccc7;
-            color: #ff4d4f;
-            padding: 16px;
-            border-radius: 8px;
-            margin-top: 20px;
-        }
-        .error.show {
-            display: block;
-        }
-        .success {
-            display: none;
-            background: #f6ffed;
-            border: 1px solid #b7eb8f;
-            color: #52c41a;
-            padding: 16px;
-            border-radius: 8px;
-            margin-top: 20px;
-        }
-        .success.show {
-            display: block;
-        }
-        .tips {
-            font-size: 12px;
-            color: #999;
-            margin-top: 6px;
-        }
-        .back-link {
-            display: inline-block;
-            margin-bottom: 16px;
-            color: #ff6b35;
-            text-decoration: none;
             font-size: 14px;
+            color: #333;
+            transition: background 0.15s;
         }
-        .back-link:hover {
-            text-decoration: underline;
+        .select-option:hover { background: #f5f5f5; }
+        .select-option.selected {
+            background: #FFF9E5;
+            color: #ff6b35;
+            font-weight: 600;
         }
     </style>
 </head>
 <body>
     <div class="container">
         <div class="header">
-            <h1>美团经营宝 - 汇总报表</h1>
-            <div class="subtitle">生成多板块汇总 Excel 报表</div>
+            <h1>美团经营宝 - 报表生成</h1>
+            <div class="subtitle">生成汇总报表和门店评论 Excel</div>
         </div>
 
-        <div class="card">
-            <form id="summaryForm">
-                <div class="form-group">
-                    <label>门店列表</label>
-                    <div class="shop-list" id="shopList">
-                        <div class="shop-item">
-                            <input type="text" class="shop-input" placeholder="输入门店ID，如：1933643130" value="1933643130">
-                            <button type="button" class="btn-remove" onclick="removeShop(this)">&times;</button>
-                        </div>
-                    </div>
-                    <button type="button" class="btn-add" onclick="addShop()">+ 添加门店</button>
-                    <div class="tips">支持多个门店，将生成多门店汇总报表</div>
-                </div>
+        <div class="card" style="padding-top: 0;">
+            <!-- Tab导航 -->
+            <div class="tab-nav">
+                <button class="tab-btn active" data-tab="summary" onclick="switchTab('summary')">汇总报表</button>
+                <button class="tab-btn" data-tab="shopReview" onclick="switchTab('shopReview')">门店评论</button>
+                <button class="tab-btn" data-tab="shopMapping" onclick="switchTab('shopMapping')">门店映射表</button>
+            </div>
 
-                <div class="form-row">
+            <!-- 汇总报表表单 -->
+            <div class="tab-content active" id="summaryTab">
+                <form id="summaryForm">
+                    <!-- 门店列表 -->
                     <div class="form-group">
-                        <label>平台</label>
-                        <div class="platform-group">
-                            <div class="platform-option">
-                                <input type="radio" id="platform0" name="platform" value="0" checked>
-                                <label for="platform0">全平台</label>
+                        <label>门店列表</label>
+                        <div class="shop-list" id="manualShopList">
+                            <div class="shop-item">
+                                <input type="text" class="shop-input" placeholder="输入门店ID，如：1933643130">
+                                <button type="button" class="btn-remove" onclick="removeManualShop(this)">&times;</button>
                             </div>
-                            <div class="platform-option">
-                                <input type="radio" id="platform1" name="platform" value="1">
-                                <label for="platform1">点评</label>
+                        </div>
+                        <button type="button" class="btn-add" onclick="addManualShop()">+ 添加门店</button>
+                        <div class="tips">支持多个门店，将生成多门店汇总报表</div>
+                    </div>
+
+                    <!-- 城市门店选择器 -->
+                    <div class="form-group">
+                        <label>选择门店（按省市）</label>
+                        <div class="shop-selector" id="shopSelector">
+                            <div class="shop-trigger" id="shopTrigger" onclick="toggleShopDropdown()">
+                                <span class="shop-placeholder" id="shopPlaceholder">点击选择门店</span>
                             </div>
-                            <div class="platform-option">
-                                <input type="radio" id="platform2" name="platform" value="2">
-                                <label for="platform2">美团</label>
+                            <div class="shop-dropdown" id="shopDropdown">
+                                <!-- 第一列：省份 -->
+                                <div class="shop-dropdown-col" id="provinceCol">
+                                    <div class="shop-dropdown-col-title">按省份选择</div>
+                                    <div id="provinceList"></div>
+                                </div>
+                                <!-- 第二列：城市 -->
+                                <div class="shop-dropdown-col" id="cityCol">
+                                    <div class="shop-dropdown-col-title" id="cityColTitle">请选择省份</div>
+                                    <div id="cityList"></div>
+                                </div>
+                                <!-- 第三列：门店 -->
+                                <div class="shop-dropdown-col" id="shopCol">
+                                    <div class="shop-dropdown-col-title">选择门店</div>
+                                    <div class="shop-search-wrapper">
+                                        <input type="text" class="shop-search-input" id="shopSearchInput" placeholder="搜索门店名称或ID" oninput="onShopSearch()">
+                                    </div>
+                                    <div class="shop-select-all-wrapper" id="shopSelectAllWrapper" style="padding: 8px 16px; border-bottom: 1px solid #f0f0f0;">
+                                        <div class="shop-item" id="selectAllShops" onclick="selectAllFilteredShops()" style="cursor: pointer;">
+                                            <div class="shop-checkbox" id="selectAllCheckbox"></div>
+                                            <span style="flex:1;font-weight:500;color:#333;">全部门店</span>
+                                            <span style="color:#999;font-size:12px" id="selectAllCount"></span>
+                                        </div>
+                                    </div>
+                                    <div class="shop-list-wrapper" id="shopListWrapper">
+                                        <div id="shopList"></div>
+                                        <div class="shop-load-tip" id="shopLoadTip">加载中...</div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <input type="hidden" id="selectedShopIds" name="selectedShopIds">
+                        <div class="tips">支持多选，先选省份和城市，再选具体门店</div>
+                    </div>
+
+                    <div class="form-row">
+                        <!-- 平台下拉框 -->
+                        <div class="form-group">
+                            <label>平台</label>
+                            <div class="select-wrapper" id="platformSelect">
+                                <div class="select-trigger" onclick="toggleSelect('platformSelect')">
+                                    <span class="select-value" data-value="0">全平台</span>
+                                    <span class="select-arrow"></span>
+                                </div>
+                                <div class="select-dropdown">
+                                    <div class="select-option" data-value="0" onclick="selectOption('platformSelect', 0, '全平台')">全平台</div>
+                                    <div class="select-option" data-value="1" onclick="selectOption('platformSelect', 1, '点评')">点评</div>
+                                    <div class="select-option" data-value="2" onclick="selectOption('platformSelect', 2, '美团')">美团</div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- 评论统计平台下拉框 -->
+                        <div class="form-group">
+                            <label>评论统计平台</label>
+                            <div class="select-wrapper" id="reviewPlatformSelect">
+                                <div class="select-trigger" onclick="toggleSelect('reviewPlatformSelect')">
+                                    <span class="select-value" data-value="2">美团</span>
+                                    <span class="select-arrow"></span>
+                                </div>
+                                <div class="select-dropdown">
+                                    <div class="select-option" data-value="1" onclick="selectOption('reviewPlatformSelect', 1, '点评')">点评</div>
+                                    <div class="select-option" data-value="2" onclick="selectOption('reviewPlatformSelect', 2, '美团')">美团</div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- 评论统计日期范围下拉框 -->
+                        <div class="form-group">
+                            <label>评论统计日期范围</label>
+                            <div class="select-wrapper" id="dateScopeSelect">
+                                <div class="select-trigger" onclick="toggleSelect('dateScopeSelect')">
+                                    <span class="select-value" data-value="2">近7天</span>
+                                    <span class="select-arrow"></span>
+                                </div>
+                                <div class="select-dropdown">
+                                    <div class="select-option" data-value="1" onclick="selectOption('dateScopeSelect', 1, '昨天')">昨天</div>
+                                    <div class="select-option" data-value="2" onclick="selectOption('dateScopeSelect', 2, '近7天')">近7天</div>
+                                    <div class="select-option" data-value="3" onclick="selectOption('dateScopeSelect', 3, '近30天')">近30天</div>
+                                </div>
                             </div>
                         </div>
                     </div>
 
                     <div class="form-group">
-                        <label>门店评论平台</label>
-                        <div class="platform-group">
-                            <div class="platform-option">
-                                <input type="radio" id="reviewPlatform1" name="reviewPlatform" value="1" checked>
-                                <label for="reviewPlatform1">点评</label>
+                        <label>日期范围</label>
+                        <div class="date-range-group">
+                            <div class="radio-card">
+                                <input type="radio" id="range7" name="dateRange" value="7" checked>
+                                <label for="range7">近7天</label>
                             </div>
-                            <div class="platform-option">
-                                <input type="radio" id="reviewPlatform2" name="reviewPlatform" value="2">
-                                <label for="reviewPlatform2">美团</label>
+                            <div class="radio-card">
+                                <input type="radio" id="range15" name="dateRange" value="15">
+                                <label for="range15">近15天</label>
                             </div>
-                        </div>
-                        <div class="tips">注：门店评论不支持全平台，需单独选择</div>
-                    </div>
-                </div>
-
-                <div class="form-group">
-                    <label>日期范围</label>
-                    <div class="date-range-group">
-                        <div class="radio-card">
-                            <input type="radio" id="range7" name="dateRange" value="7" checked>
-                            <label for="range7">近7天</label>
-                        </div>
-                        <div class="radio-card">
-                            <input type="radio" id="range15" name="dateRange" value="15">
-                            <label for="range15">近15天</label>
-                        </div>
-                        <div class="radio-card">
-                            <input type="radio" id="range30" name="dateRange" value="30">
-                            <label for="range30">近30天</label>
-                        </div>
-                        <div class="radio-card">
-                            <input type="radio" id="rangeCustom" name="dateRange" value="custom">
-                            <label for="rangeCustom">自定义</label>
-                        </div>
-                        <div class="custom-date" id="customDateInputs">
-                            <div class="date-display" id="dateDisplay">
-                                <span id="dateDisplayText">点击选择日期范围</span>
+                            <div class="radio-card">
+                                <input type="radio" id="range30" name="dateRange" value="30">
+                                <label for="range30">近30天</label>
                             </div>
-                            <input type="hidden" id="beginDate" name="beginDate">
-                            <input type="hidden" id="endDate" name="endDate">
-                            <div class="calendar-wrapper">
-                                <div class="calendar" id="calendar"></div>
+                            <div class="radio-card">
+                                <input type="radio" id="rangeCustom" name="dateRange" value="custom">
+                                <label for="rangeCustom">自定义</label>
+                            </div>
+                            <div class="custom-date" id="customDateInputs">
+                                <div class="date-display" id="dateDisplay">
+                                    <span id="dateDisplayText">点击选择日期范围</span>
+                                </div>
+                                <input type="hidden" id="beginDate" name="beginDate">
+                                <input type="hidden" id="endDate" name="endDate">
+                                <div class="calendar-wrapper">
+                                    <div class="calendar" id="calendar"></div>
+                                </div>
                             </div>
                         </div>
                     </div>
-                </div>
 
-                <button type="submit" class="btn-submit" id="submitBtn">生成报表</button>
-            </form>
+                    <button type="submit" class="btn-submit" id="submitBtn">生成报表</button>
+                </form>
+            </div>
+
+            <!-- 门店评论表单 -->
+            <div class="tab-content" id="shopReviewTab">
+                <form id="shopReviewForm">
+                    <!-- 门店列表 -->
+                    <div class="form-group">
+                        <label>门店列表</label>
+                        <div class="shop-list" id="manualShopListReview">
+                            <div class="shop-item">
+                                <input type="text" class="shop-input" placeholder="输入门店ID，如：1933643130">
+                                <button type="button" class="btn-remove" onclick="removeManualShopReview(this)">&times;</button>
+                            </div>
+                        </div>
+                        <button type="button" class="btn-add" onclick="addManualShopReview()">+ 添加门店</button>
+                        <div class="tips">支持多个门店，将生成多门店评论报表</div>
+                    </div>
+
+                    <!-- 城市门店选择器 -->
+                    <div class="form-group">
+                        <label>选择门店（按省市）</label>
+                        <div class="shop-selector" id="shopSelectorReview">
+                            <div class="shop-trigger" id="shopTriggerReview" onclick="toggleShopDropdownReview()">
+                                <span class="shop-placeholder" id="shopPlaceholderReview">点击选择门店</span>
+                            </div>
+                            <div class="shop-dropdown" id="shopDropdownReview">
+                                <div class="shop-dropdown-col" id="provinceColReview">
+                                    <div class="shop-dropdown-col-title">按省份选择</div>
+                                    <div id="provinceListReview"></div>
+                                </div>
+                                <div class="shop-dropdown-col" id="cityColReview">
+                                    <div class="shop-dropdown-col-title" id="cityColTitleReview">请选择省份</div>
+                                    <div id="cityListReview"></div>
+                                </div>
+                                <div class="shop-dropdown-col" id="shopColReview">
+                                    <div class="shop-dropdown-col-title">选择门店</div>
+                                    <div class="shop-search-wrapper">
+                                        <input type="text" class="shop-search-input" id="shopSearchInputReview" placeholder="搜索门店名称或ID" oninput="onShopSearchReview()">
+                                    </div>
+                                    <div class="shop-list-wrapper" id="shopListWrapperReview">
+                                        <div id="shopListReview"></div>
+                                        <div class="shop-load-tip" id="shopLoadTipReview">加载中...</div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <input type="hidden" id="selectedShopIdsReview" name="selectedShopIdsReview">
+                        <div class="tips">支持多选，先选省份和城市，再选具体门店</div>
+                    </div>
+
+                    <div class="form-row">
+                        <!-- 平台下拉框 -->
+                        <div class="form-group">
+                            <label>平台</label>
+                            <div class="select-wrapper" id="reviewPlatformSelectReview">
+                                <div class="select-trigger" onclick="toggleSelect('reviewPlatformSelectReview')">
+                                    <span class="select-value" data-value="1">点评</span>
+                                    <span class="select-arrow"></span>
+                                </div>
+                                <div class="select-dropdown">
+                                    <div class="select-option" data-value="1" onclick="selectOption('reviewPlatformSelectReview', 1, '点评')">点评</div>
+                                    <div class="select-option" data-value="2" onclick="selectOption('reviewPlatformSelectReview', 2, '美团')">美团</div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="form-group">
+                        <label>日期范围</label>
+                        <div class="date-range-group">
+                            <div class="radio-card">
+                                <input type="radio" id="range7Review" name="dateRangeReview" value="7" checked>
+                                <label for="range7Review">近7天</label>
+                            </div>
+                            <div class="radio-card">
+                                <input type="radio" id="range15Review" name="dateRangeReview" value="15">
+                                <label for="range15Review">近15天</label>
+                            </div>
+                            <div class="radio-card">
+                                <input type="radio" id="range30Review" name="dateRangeReview" value="30">
+                                <label for="range30Review">近30天</label>
+                            </div>
+                            <div class="radio-card">
+                                <input type="radio" id="rangeCustomReview" name="dateRangeReview" value="custom">
+                                <label for="rangeCustomReview">自定义</label>
+                            </div>
+                            <div class="custom-date" id="customDateInputsReview">
+                                <div class="date-display" id="dateDisplayReview">
+                                    <span id="dateDisplayTextReview">点击选择日期范围</span>
+                                </div>
+                                <input type="hidden" id="beginDateReview" name="beginDateReview">
+                                <input type="hidden" id="endDateReview" name="endDateReview">
+                                <div class="calendar-wrapper">
+                                    <div class="calendar" id="calendarReview"></div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <button type="submit" class="btn-submit" id="submitBtnReview">生成报表</button>
+                </form>
+            </div>
+
+            <!-- 门店映射表 -->
+            <div class="tab-content" id="shopMappingTab">
+                <div class="shop-mapping-header">
+                    <div class="shop-mapping-info" id="shopMappingInfo">共 0 家门店</div>
+                    <button type="button" class="btn-refresh" id="refreshShopMappingBtn" onclick="refreshShopMapping()">更新门店数据</button>
+                </div>
+                <div class="shop-mapping-table-wrapper">
+                    <table class="shop-mapping-table" id="shopMappingTable">
+                        <thead>
+                            <tr>
+                                <th>序号</th>
+                                <th>门店名称</th>
+                                <th>城市</th>
+                                <th>美团门店ID</th>
+                                <th>点评门店ID</th>
+                            </tr>
+                        </thead>
+                        <tbody id="shopMappingBody">
+                            <tr><td colspan="5" class="loading-cell">加载中...</td></tr>
+                        </tbody>
+                    </table>
+                </div>
+                <div class="shop-mapping-pagination" id="shopMappingPagination">
+                    <button class="page-btn" id="prevPageBtn" onclick="changeShopMappingPage(-1)" disabled>上一页</button>
+                    <span class="page-info" id="pageInfo">第 1 / 1 页</span>
+                    <button class="page-btn" id="nextPageBtn" onclick="changeShopMappingPage(1)" disabled>下一页</button>
+                </div>
+                <div class="loading" id="shopMappingLoading" style="display: none;">
+                    <div class="spinner"></div>
+                    <div id="shopMappingLoadingText">正在更新门店数据...</div>
+                </div>
+            </div>
 
             <div class="loading" id="loading">
                 <div class="spinner"></div>
@@ -491,6 +748,620 @@
     </div>
 
     <script>
+        // ========== Tab切换 ==========
+        function switchTab(tabName) {
+            // 更新tab按钮状态
+            document.querySelectorAll('.tab-btn').forEach(btn => {
+                btn.classList.toggle('active', btn.dataset.tab === tabName);
+            });
+            // 更新tab内容显示
+            document.querySelectorAll('.tab-content').forEach(content => {
+                content.classList.toggle('active', content.id === tabName + 'Tab');
+            });
+            // 隐藏成功消息
+            document.getElementById('successMsg').classList.remove('show');
+            document.getElementById('errorMsg').classList.remove('show');
+        }
+
+        // ========== 下拉选择器 ==========
+        function toggleSelect(selectId) {
+            const wrapper = document.getElementById(selectId);
+            const dropdown = wrapper.querySelector('.select-dropdown');
+            const trigger = wrapper.querySelector('.select-trigger');
+
+            // 关闭其他下拉框
+            document.querySelectorAll('.select-wrapper').forEach(sw => {
+                if (sw.id !== selectId) {
+                    sw.querySelector('.select-dropdown').classList.remove('show');
+                    sw.querySelector('.select-trigger').classList.remove('open');
+                }
+            });
+
+            trigger.classList.toggle('open');
+            dropdown.classList.toggle('show');
+        }
+
+        function selectOption(selectId, value, label) {
+            const wrapper = document.getElementById(selectId);
+            const trigger = wrapper.querySelector('.select-trigger');
+            const valueSpan = trigger.querySelector('.select-value');
+            const dropdown = wrapper.querySelector('.select-dropdown');
+
+            valueSpan.textContent = label;
+            valueSpan.dataset.value = value;
+
+            // 更新选中状态
+            wrapper.querySelectorAll('.select-option').forEach(opt => {
+                opt.classList.toggle('selected', parseInt(opt.dataset.value) === value);
+            });
+
+            trigger.classList.remove('open');
+            dropdown.classList.remove('show');
+        }
+
+        // 点击其他地方关闭下拉框
+        document.addEventListener('click', function(e) {
+            // 关闭平台下拉框
+            if (!e.target.closest('.select-wrapper')) {
+                document.querySelectorAll('.select-dropdown').forEach(d => d.classList.remove('show'));
+                document.querySelectorAll('.select-trigger').forEach(t => t.classList.remove('open'));
+            }
+            // 关闭汇总报表的门店选择器下拉框
+            if (!e.target.closest('#shopSelector')) {
+                const dropdown = document.getElementById('shopDropdown');
+                const trigger = document.getElementById('shopTrigger');
+                if (dropdown && dropdown.classList.contains('show')) {
+                    dropdown.classList.remove('show');
+                    trigger.classList.remove('active');
+                }
+            }
+            // 关闭门店评论的门店选择器下拉框
+            if (!e.target.closest('#shopSelectorReview')) {
+                const dropdown = document.getElementById('shopDropdownReview');
+                const trigger = document.getElementById('shopTriggerReview');
+                if (dropdown && dropdown.classList.contains('show')) {
+                    dropdown.classList.remove('show');
+                    trigger.classList.remove('active');
+                }
+            }
+        });
+
+        // ========== 门店选择器 ==========
+        let cityData = null;           // 省份-城市数据
+        let shopData = null;           // 门店数据
+        let selectedProvinces = new Set();   // 已选省份ID
+        let allProvincesSelected = true;     // 是否选中"全部省份"
+        let selectedCities = new Set();      // 已选城市ID
+        let allCitiesSelected = true;        // 是否选中"全部城市"
+        let currentAllCities = [];          // 当前显示的城市列表（供toggleCity/toggleAllCities使用）
+        let selectedShops = new Map();       // 已选门店ID -> 门店信息
+        let allFilteredShops = [];           // 当前过滤后的全部门店
+        let displayedShopCount = 0;          // 当前已加载的门店数
+        const SHOP_PAGE_SIZE = 100;          // 每页加载门店数
+
+        // 加载省份-城市数据
+        async function loadCityData() {
+            try {
+                const response = await fetch('tuiguangtong/city_selector.json');
+                cityData = await response.json();
+                window.cityData = cityData;
+                renderProvinceList();
+            } catch (error) {
+                console.error('加载城市数据失败:', error);
+            }
+        }
+
+        // 加载门店数据
+        async function loadShopData() {
+            try {
+                const response = await fetch('tuiguangtong/shop_mapping.json');
+                shopData = await response.json();
+                window.shopData = shopData;
+                filterAndLoadShops();
+            } catch (error) {
+                console.error('加载门店数据失败:', error);
+            }
+        }
+
+        // 渲染省份列表
+        function renderProvinceList() {
+            const provinceList = document.getElementById('provinceList');
+            provinceList.innerHTML = '';
+
+            if (!cityData || !cityData.provinces) return;
+
+            // 全选按钮
+            const allDiv = document.createElement('div');
+            allDiv.className = 'province-item';
+            allDiv.innerHTML = `
+                <div class="shop-checkbox ${allProvincesSelected ? 'checked' : ''}">${allProvincesSelected ? '✓' : ''}</div>
+                <span style="font-weight:500">全部</span>
+            `;
+            allDiv.addEventListener('click', (e) => { e.stopPropagation(); toggleAllProvinces(); });
+            provinceList.appendChild(allDiv);
+
+            cityData.provinces.forEach(province => {
+                const div = document.createElement('div');
+                div.className = 'province-item';
+                const isSelected = selectedProvinces.has(province.provinceId);
+                const cityCount = province.cities ? province.cities.length : 0;
+
+                div.innerHTML = `
+                    <div class="shop-checkbox ${isSelected ? 'checked' : ''}">${isSelected ? '✓' : ''}</div>
+                    <span>${province.provinceName}</span>
+                    ${isSelected ? `<span style="color:#999;font-size:12px">(${cityCount})</span>` : ''}
+                `;
+
+                div.addEventListener('click', (e) => { e.stopPropagation(); toggleProvince(province); });
+                provinceList.appendChild(div);
+            });
+        }
+
+        // 切换全选省份
+        function toggleAllProvinces() {
+            if (allProvincesSelected) {
+                // 取消全选，清空所有省份
+                allProvincesSelected = false;
+                selectedProvinces.clear();
+            } else {
+                // 设为全选
+                allProvincesSelected = true;
+                selectedProvinces.clear();
+                cityData.provinces.forEach(p => selectedProvinces.add(p.provinceId));
+            }
+            allCitiesSelected = true;
+            selectedCities.clear();
+            renderProvinceList();
+            renderCityList();
+            filterAndLoadShops();
+            updateShopUI();
+        }
+
+        // 切换单个省份
+        function toggleProvince(province) {
+            if (selectedProvinces.has(province.provinceId)) {
+                selectedProvinces.delete(province.provinceId);
+                allProvincesSelected = false;
+                // 移除该省份下所有城市
+                if (province.cities) {
+                    province.cities.forEach(c => selectedCities.delete(c.cityId));
+                }
+            } else {
+                selectedProvinces.add(province.provinceId);
+                if (province.cities) {
+                    province.cities.forEach(c => selectedCities.add(c.cityId));
+                }
+                // 检查是否所有省份都被选中了
+                if (selectedProvinces.size === cityData.provinces.length) {
+                    allProvincesSelected = true;
+                }
+            }
+            allCitiesSelected = true;
+            selectedCities.clear();
+            renderProvinceList();
+            renderCityList();
+            filterAndLoadShops();
+            updateShopUI();
+        }
+
+        // 渲染城市列表
+        function renderCityList() {
+            const cityColTitle = document.getElementById('cityColTitle');
+            const cityList = document.getElementById('cityList');
+
+            // 收集所有已选省份的城市（allProvincesSelected或未选择省份时收集所有城市）
+            currentAllCities = [];
+            cityData.provinces.forEach(p => {
+                if ((allProvincesSelected || selectedProvinces.size === 0 || selectedProvinces.has(p.provinceId)) && p.cities) {
+                    currentAllCities.push(...p.cities);
+                }
+            });
+
+            if (currentAllCities.length === 0) {
+                cityColTitle.textContent = '暂无论城市';
+                cityList.innerHTML = '<div style="padding:16px;color:#999;text-align:center;">暂无论城市</div>';
+                return;
+            }
+
+            cityColTitle.textContent = allProvincesSelected ? '全部省份' : `已选 ${selectedProvinces.size} 个省份`;
+            cityList.innerHTML = '';
+
+            // 全选按钮
+            const allDiv = document.createElement('div');
+            allDiv.className = 'shop-item';
+            allDiv.innerHTML = `
+                <div class="shop-checkbox ${allCitiesSelected ? 'checked' : ''}">${allCitiesSelected ? '✓' : ''}</div>
+                <span style="font-weight:500">全部</span>
+            `;
+            allDiv.addEventListener('click', (e) => { e.stopPropagation(); toggleAllCities(); });
+            cityList.appendChild(allDiv);
+
+            currentAllCities.forEach(city => {
+                const div = document.createElement('div');
+                div.className = 'shop-item';
+                const isSelected = selectedCities.has(city.cityId);
+                if (isSelected) div.classList.add('selected');
+
+                div.innerHTML = `
+                    <div class="shop-checkbox ${isSelected ? 'checked' : ''}">${isSelected ? '✓' : ''}</div>
+                    <span>${city.cityName}</span>
+                `;
+
+                div.addEventListener('click', (e) => { e.stopPropagation(); toggleCity(city); });
+                cityList.appendChild(div);
+            });
+        }
+
+        // 切换全选城市
+        function toggleAllCities() {
+            if (allCitiesSelected) {
+                // 取消全选，清空所有城市
+                allCitiesSelected = false;
+                selectedCities.clear();
+            } else {
+                // 设为全选
+                allCitiesSelected = true;
+                selectedCities.clear();
+                currentAllCities.forEach(c => selectedCities.add(c.cityId));
+            }
+            renderCityList();
+            filterAndLoadShops();
+            updateShopUI();
+        }
+
+        // 切换单个城市
+        function toggleCity(city) {
+            if (selectedCities.has(city.cityId)) {
+                selectedCities.delete(city.cityId);
+                allCitiesSelected = false;
+            } else {
+                selectedCities.add(city.cityId);
+                // 检查是否所有城市都被选中了
+                if (selectedCities.size === currentAllCities.length) {
+                    allCitiesSelected = true;
+                }
+            }
+            renderCityList();
+            filterAndLoadShops();
+            updateShopUI();
+        }
+
+        // 过滤并加载门店
+        function filterAndLoadShops() {
+            if (!shopData || !shopData.shops) return;
+
+            const searchKeyword = document.getElementById('shopSearchInput').value.trim().toLowerCase();
+
+            // 获取已选城市对应的城市名集合
+            const selectedCityNames = new Set();
+            cityData.provinces.forEach(p => {
+                if (!allProvincesSelected && selectedProvinces.size > 0 && !selectedProvinces.has(p.provinceId)) return;
+                if (p.cities) {
+                    p.cities.forEach(c => {
+                        // allProvincesSelected或未选择省份时收集所有城市；否则收集已选省份的城市
+                        if ((allProvincesSelected || selectedProvinces.size === 0) && (allCitiesSelected || selectedCities.has(c.cityId))) {
+                            selectedCityNames.add(c.cityName);
+                        } else if (selectedProvinces.has(p.provinceId) && (allCitiesSelected || selectedCities.has(c.cityId))) {
+                            selectedCityNames.add(c.cityName);
+                        }
+                    });
+                }
+            });
+
+            // 过滤门店
+            allFilteredShops = shopData.shops.filter(shop => {
+                // 城市过滤
+                if (selectedCityNames.size > 0 && !selectedCityNames.has(shop.city)) {
+                    return false;
+                }
+                // 搜索过滤
+                if (searchKeyword) {
+                    const nameMatch = shop.name.toLowerCase().includes(searchKeyword);
+                    const idMatch = shop.ids.some(id => id.id.includes(searchKeyword));
+                    return nameMatch || idMatch;
+                }
+                return true;
+            });
+
+            // 重置分页
+            displayedShopCount = 0;
+            document.getElementById('shopLoadTip').textContent = '加载更多...';
+            renderShopList(true);
+        }
+
+        // 渲染门店列表
+        function renderShopList(reset = false) {
+            const shopList = document.getElementById('shopList');
+            const shopLoadTip = document.getElementById('shopLoadTip');
+
+            if (reset) {
+                shopList.innerHTML = '';
+                displayedShopCount = 0;
+            }
+
+            // 计算本次加载的结束位置
+            const endIndex = Math.min(displayedShopCount + SHOP_PAGE_SIZE, allFilteredShops.length);
+            const shopsToRender = allFilteredShops.slice(displayedShopCount, endIndex);
+
+            shopsToRender.forEach(shop => {
+                const shopId = shop.ids.find(id => id.type === 'dianping')?.id || shop.ids[0]?.id || '';
+                const isSelected = selectedShops.has(shopId);
+
+                if (!reset && shopList.children.length > 0 && shopList.children[shopsToRender.indexOf(shop)]) {
+                    // 只更新已显示门店的checkbox状态
+                    const existingDiv = shopList.children[shopsToRender.indexOf(shop)];
+                    if (existingDiv) {
+                        const checkbox = existingDiv.querySelector('.shop-checkbox');
+                        if (checkbox) {
+                            checkbox.className = `shop-checkbox ${isSelected ? 'checked' : ''}`;
+                            checkbox.textContent = isSelected ? '✓' : '';
+                        }
+                        if (isSelected) {
+                            existingDiv.classList.add('selected');
+                        } else {
+                            existingDiv.classList.remove('selected');
+                        }
+                    }
+                } else {
+                    // 新增门店元素
+                    const div = document.createElement('div');
+                    div.className = 'shop-item';
+                    if (isSelected) div.classList.add('selected');
+
+                    div.innerHTML = `
+                        <div class="shop-checkbox ${isSelected ? 'checked' : ''}">${isSelected ? '✓' : ''}</div>
+                        <span style="flex:1">${shop.name}</span>
+                        <span style="color:#999;font-size:12px">${shop.city}</span>
+                    `;
+
+                    div.addEventListener('click', (e) => { e.stopPropagation(); toggleShop(shop, shopId); });
+                    shopList.appendChild(div);
+                }
+            });
+
+            displayedShopCount = endIndex;
+
+            // 更新加载提示
+            if (displayedShopCount >= allFilteredShops.length) {
+                shopLoadTip.textContent = '已加载全部';
+                shopLoadTip.style.cursor = 'default';
+            } else {
+                shopLoadTip.textContent = `加载更多（${displayedShopCount}/${allFilteredShops.length}）...`;
+                shopLoadTip.style.cursor = 'pointer';
+            }
+        }
+
+        // 切换单个门店
+        function toggleShop(shop, shopId) {
+            if (selectedShops.has(shopId)) {
+                selectedShops.delete(shopId);
+            } else {
+                selectedShops.set(shopId, { name: shop.name, city: shop.city });
+            }
+            renderShopList(true);
+            updateShopUI();
+        }
+
+        // 全部门店选择
+        function selectAllFilteredShops() {
+            if (!shopData || !shopData.shops) return;
+
+            // 获取已选城市对应的城市名集合
+            const selectedCityNames = new Set();
+            cityData.provinces.forEach(p => {
+                if (!allProvincesSelected && selectedProvinces.size > 0 && !selectedProvinces.has(p.provinceId)) return;
+                if (p.cities) {
+                    p.cities.forEach(c => {
+                        if ((allProvincesSelected || selectedProvinces.size === 0) && (allCitiesSelected || selectedCities.has(c.cityId))) {
+                            selectedCityNames.add(c.cityName);
+                        } else if (selectedProvinces.has(p.provinceId) && (allCitiesSelected || selectedCities.has(c.cityId))) {
+                            selectedCityNames.add(c.cityName);
+                        }
+                    });
+                }
+            });
+
+            // 根据城市过滤门店
+            const shopsToSelect = shopData.shops.filter(shop => {
+                return selectedCityNames.size === 0 || selectedCityNames.has(shop.city);
+            });
+
+            // 检查是否已全选
+            const allSelected = shopsToSelect.every(shop => {
+                const shopId = shop.ids.find(id => id.type === 'dianping')?.id || shop.ids[0]?.id || '';
+                return selectedShops.has(shopId);
+            });
+
+            if (allSelected) {
+                // 取消全选
+                shopsToSelect.forEach(shop => {
+                    const shopId = shop.ids.find(id => id.type === 'dianping')?.id || shop.ids[0]?.id || '';
+                    selectedShops.delete(shopId);
+                });
+            } else {
+                // 全选
+                shopsToSelect.forEach(shop => {
+                    const shopId = shop.ids.find(id => id.type === 'dianping')?.id || shop.ids[0]?.id || '';
+                    selectedShops.set(shopId, { name: shop.name, city: shop.city });
+                });
+            }
+
+            renderShopList(true);
+            updateShopSelectAllUI();
+            updateShopUI();
+        }
+
+        // 更新全选按钮状态
+        function updateShopSelectAllUI() {
+            if (!shopData || !shopData.shops) return;
+
+            // 获取已选城市对应的城市名集合
+            const selectedCityNames = new Set();
+            cityData.provinces.forEach(p => {
+                if (!allProvincesSelected && selectedProvinces.size > 0 && !selectedProvinces.has(p.provinceId)) return;
+                if (p.cities) {
+                    p.cities.forEach(c => {
+                        if ((allProvincesSelected || selectedProvinces.size === 0) && (allCitiesSelected || selectedCities.has(c.cityId))) {
+                            selectedCityNames.add(c.cityName);
+                        } else if (selectedProvinces.has(p.provinceId) && (allCitiesSelected || selectedCities.has(c.cityId))) {
+                            selectedCityNames.add(c.cityName);
+                        }
+                    });
+                }
+            });
+
+            // 计算当前过滤条件下的门店数量
+            const filteredShops = shopData.shops.filter(shop => {
+                return selectedCityNames.size === 0 || selectedCityNames.has(shop.city);
+            });
+
+            // 计算已选数量
+            const selectedCount = filteredShops.filter(shop => {
+                const shopId = shop.ids.find(id => id.type === 'dianping')?.id || shop.ids[0]?.id || '';
+                return selectedShops.has(shopId);
+            }).length;
+
+            // 更新数量显示
+            const countEl = document.getElementById('selectAllCount');
+            const checkboxEl = document.getElementById('selectAllCheckbox');
+
+            if (countEl) {
+                countEl.textContent = `${selectedCount}/${filteredShops.length}`;
+            }
+
+            // 更新复选框状态（只有全选和非全选两种状态）
+            if (checkboxEl) {
+                if (filteredShops.length > 0 && selectedCount === filteredShops.length) {
+                    checkboxEl.className = 'shop-checkbox checked';
+                    checkboxEl.textContent = '✓';
+                } else {
+                    checkboxEl.className = 'shop-checkbox';
+                    checkboxEl.textContent = '';
+                }
+            }
+        }
+
+        // 搜索门店
+        function onShopSearch() {
+            filterAndLoadShops();
+        }
+
+        // 更新触发器显示
+        function updateShopUI() {
+            const trigger = document.getElementById('shopTrigger');
+            const placeholder = document.getElementById('shopPlaceholder');
+            const hiddenInput = document.getElementById('selectedShopIds');
+
+            trigger.querySelectorAll('.shop-tag, .shop-count, .shop-clear-all').forEach(el => el.remove());
+
+            if (selectedShops.size === 0) {
+                placeholder.style.display = 'block';
+            } else {
+                placeholder.style.display = 'none';
+
+                // 显示前3个门店标签
+                const shopEntries = Array.from(selectedShops.entries());
+                shopEntries.slice(0, 3).forEach(([shopId, info]) => {
+                    const tag = document.createElement('span');
+                    tag.className = 'shop-tag';
+                    tag.innerHTML = `${info.name} <span class="remove" onclick="event.stopPropagation();removeShop('${shopId}')">&times;</span>`;
+                    trigger.insertBefore(tag, placeholder);
+                });
+
+                if (shopEntries.length > 3) {
+                    const count = document.createElement('span');
+                    count.className = 'shop-count';
+                    count.textContent = `共 ${shopEntries.length} 个门店`;
+                    trigger.insertBefore(count, placeholder);
+                }
+
+                const clearBtn = document.createElement('button');
+                clearBtn.type = 'button';
+                clearBtn.className = 'shop-clear-all';
+                clearBtn.textContent = '×';
+                clearBtn.title = '清除全部';
+                clearBtn.addEventListener('click', (e) => {
+                    e.stopPropagation();
+                    clearAllShops();
+                });
+                trigger.appendChild(clearBtn);
+            }
+
+            hiddenInput.value = JSON.stringify(Array.from(selectedShops.keys()));
+        }
+
+        // 添加门店输入框
+        function addManualShop() {
+            const shopList = document.getElementById('manualShopList');
+            const div = document.createElement('div');
+            div.className = 'shop-item';
+            div.innerHTML = `
+                <input type="text" class="shop-input" placeholder="输入门店ID，如：1933643130">
+                <button type="button" class="btn-remove" onclick="removeManualShop(this)">&times;</button>
+            `;
+            shopList.appendChild(div);
+        }
+
+        // 移除门店输入框
+        function removeManualShop(btn) {
+            const shopList = document.getElementById('manualShopList');
+            const items = shopList.querySelectorAll('.shop-item');
+            if (items.length > 1) {
+                btn.parentElement.remove();
+            }
+        }
+
+        // 移除单个门店
+        function removeShop(shopId) {
+            selectedShops.delete(shopId);
+            renderShopList(false);
+            updateShopUI();
+        }
+
+        // 清空所有选择
+        function clearAllShops() {
+            selectedShops.clear();
+            selectedCities.clear();
+            selectedProvinces.clear();
+            renderProvinceList();
+            renderCityList();
+            filterAndLoadShops();
+            updateShopUI();
+        }
+
+        // 切换下拉框
+        function toggleShopDropdown() {
+            const dropdown = document.getElementById('shopDropdown');
+            const trigger = document.getElementById('shopTrigger');
+
+            if (dropdown.classList.contains('show')) {
+                dropdown.classList.remove('show');
+                trigger.classList.remove('active');
+            } else {
+                dropdown.classList.add('show');
+                trigger.classList.add('active');
+                renderCityList();
+                updateShopSelectAllUI();
+            }
+        }
+
+        // 点击外部关闭
+        document.addEventListener('click', (e) => {
+            const selector = document.getElementById('shopSelector');
+            if (!selector.contains(e.target)) {
+                document.getElementById('shopDropdown').classList.remove('show');
+                document.getElementById('shopTrigger').classList.remove('active');
+            }
+        });
+
+        // 滚动加载更多
+        document.getElementById('shopListWrapper').addEventListener('scroll', (e) => {
+            const { scrollTop, scrollHeight, clientHeight } = e.target;
+            if (scrollHeight - scrollTop - clientHeight < 50 && displayedShopCount < allFilteredShops.length) {
+                renderShopList(false);
+            }
+        });
+
         // ========== 日历选择器 ==========
         class DateRangePicker {
             constructor(container, options = {}) {
@@ -501,9 +1372,7 @@
                 this.currentMonth = new Date().getMonth();
                 this.selecting = 'start';
                 this.isOpen = false;
-
                 this.weekdays = ['日', '一', '二', '三', '四', '五', '六'];
-
                 this.init();
             }
 
@@ -524,23 +1393,17 @@
             }
 
             toggle() {
-                if (this.isOpen) {
-                    this.close();
-                } else {
-                    this.open();
-                }
+                this.isOpen ? this.close() : this.open();
             }
 
             open() {
-                const calendar = document.getElementById('calendar');
-                calendar.classList.add('show');
+                document.getElementById('calendar').classList.add('show');
                 this.isOpen = true;
                 this.render();
             }
 
             close() {
-                const calendar = document.getElementById('calendar');
-                calendar.classList.remove('show');
+                document.getElementById('calendar').classList.remove('show');
                 this.isOpen = false;
             }
 
@@ -548,7 +1411,6 @@
                 const calendar = document.getElementById('calendar');
                 const year = this.currentYear;
                 const month = this.currentMonth;
-
                 const monthNames = ['1月', '2月', '3月', '4月', '5月', '6月', '7月', '8月', '9月', '10月', '11月', '12月'];
 
                 let html = `
@@ -574,8 +1436,7 @@
                 const daysInPrevMonth = new Date(year, month, 0).getDate();
 
                 for (let i = firstDay - 1; i >= 0; i--) {
-                    const day = daysInPrevMonth - i;
-                    html += `<div class="calendar-day disabled">${day}</div>`;
+                    html += `<div class="calendar-day disabled">${daysInPrevMonth - i}</div>`;
                 }
 
                 const today = new Date();
@@ -606,15 +1467,20 @@
                 html += '</div>';
                 calendar.innerHTML = html;
 
-                const preventClose = (fn) => (e) => {
-                    e.stopPropagation();
-                    fn();
-                };
+                const preventClose = (fn) => (e) => { e.stopPropagation(); fn(); };
 
-                document.getElementById('prevYear').addEventListener('click', preventClose(() => this.prevYear()));
-                document.getElementById('nextYear').addEventListener('click', preventClose(() => this.nextYear()));
-                document.getElementById('prevMonth').addEventListener('click', preventClose(() => this.prevMonth()));
-                document.getElementById('nextMonth').addEventListener('click', preventClose(() => this.nextMonth()));
+                document.getElementById('prevYear').addEventListener('click', preventClose(() => { this.currentYear--; this.render(); }));
+                document.getElementById('nextYear').addEventListener('click', preventClose(() => { this.currentYear++; this.render(); }));
+                document.getElementById('prevMonth').addEventListener('click', preventClose(() => {
+                    if (this.currentMonth === 0) { this.currentMonth = 11; this.currentYear--; }
+                    else { this.currentMonth--; }
+                    this.render();
+                }));
+                document.getElementById('nextMonth').addEventListener('click', preventClose(() => {
+                    if (this.currentMonth === 11) { this.currentMonth = 0; this.currentYear++; }
+                    else { this.currentMonth++; }
+                    this.render();
+                }));
 
                 calendar.querySelectorAll('.calendar-day:not(.disabled)').forEach(el => {
                     el.addEventListener('click', (e) => {
@@ -624,42 +1490,11 @@
                 });
             }
 
-            prevYear() {
-                this.currentYear--;
-                this.render();
-            }
-
-            nextYear() {
-                this.currentYear++;
-                this.render();
-            }
-
-            prevMonth() {
-                if (this.currentMonth === 0) {
-                    this.currentMonth = 11;
-                    this.currentYear--;
-                } else {
-                    this.currentMonth--;
-                }
-                this.render();
-            }
-
-            nextMonth() {
-                if (this.currentMonth === 11) {
-                    this.currentMonth = 0;
-                    this.currentYear++;
-                } else {
-                    this.currentMonth++;
-                }
-                this.render();
-            }
-
             selectDate(dateStr) {
                 if (this.selecting === 'start') {
                     this.beginDate = dateStr;
                     this.endDate = null;
                     this.selecting = 'end';
-                    this.updateDisplay();
                 } else {
                     if (new Date(dateStr) < new Date(this.beginDate)) {
                         this.endDate = this.beginDate;
@@ -668,9 +1503,9 @@
                         this.endDate = dateStr;
                     }
                     this.selecting = 'start';
-                    this.updateDisplay();
                     this.close();
                 }
+                this.updateDisplay();
             }
 
             isInRange(dateStr) {
@@ -704,24 +1539,22 @@
                 }
             }
 
-            getValue() {
-                return { begin: this.beginDate, end: this.endDate };
-            }
-
-            isValid() {
-                return this.beginDate && this.endDate;
-            }
+            getValue() { return { begin: this.beginDate, end: this.endDate }; }
+            isValid() { return this.beginDate && this.endDate; }
         }
 
         // ========== 表单逻辑 ==========
         let dateRangePicker;
-        let currentQueryParams = null;
+        let dateRangePickerReview;
 
         document.addEventListener('DOMContentLoaded', function() {
             dateRangePicker = new DateRangePicker(document.getElementById('customDateInputs'));
+            dateRangePickerReview = new DateRangePicker(document.getElementById('customDateInputsReview'));
+            loadCityData();
+            loadShopData();
+            initReviewShopSelector();
         });
 
-        // 日期范围切换
         document.querySelectorAll('input[name="dateRange"]').forEach(radio => {
             radio.addEventListener('change', function() {
                 const customInputs = document.getElementById('customDateInputs');
@@ -733,55 +1566,57 @@
             });
         });
 
-        // 计算N天前的日期
+        document.querySelectorAll('input[name="dateRangeReview"]').forEach(radio => {
+            radio.addEventListener('change', function() {
+                const customInputs = document.getElementById('customDateInputsReview');
+                if (this.value === 'custom') {
+                    customInputs.classList.add('show');
+                } else {
+                    customInputs.classList.remove('show');
+                }
+            });
+        });
+
         function getDateDaysAgo(days) {
             const date = new Date();
             date.setDate(date.getDate() - days);
             return date.toISOString().split('T')[0];
         }
 
-        // 添加门店输入框
-        function addShop() {
-            const shopList = document.getElementById('shopList');
-            const div = document.createElement('div');
-            div.className = 'shop-item';
-            div.innerHTML = `
-                <input type="text" class="shop-input" placeholder="输入门店ID，如：1933643130">
-                <button type="button" class="btn-remove" onclick="removeShop(this)">&times;</button>
-            `;
-            shopList.appendChild(div);
-        }
-
-        // 移除门店输入框
-        function removeShop(btn) {
-            const shopList = document.getElementById('shopList');
-            const items = shopList.querySelectorAll('.shop-item');
-            if (items.length > 1) {
-                btn.parentElement.remove();
-            }
-        }
-
-        // 表单提交
+        // 汇总报表表单提交
         document.getElementById('summaryForm').addEventListener('submit', async function(e) {
             e.preventDefault();
 
-            // 收集门店列表
-            const shopInputs = document.querySelectorAll('.shop-input');
-            const shopIds = [];
-            for (const input of shopInputs) {
+            // 收集手动输入的门店ID
+            const manualShopInputs = document.querySelectorAll('#manualShopList .shop-input');
+            const manualIds = [];
+            for (const input of manualShopInputs) {
                 const val = input.value.trim();
                 if (val) {
-                    shopIds.push(val);
+                    manualIds.push(val);
                 }
             }
 
-            if (shopIds.length === 0) {
+            // 从门店选择器获取已选门店
+            const selectorIds = Array.from(selectedShops.keys());
+
+            // 合并并去重
+            const allIds = [...new Set([...manualIds, ...selectorIds])];
+
+            if (allIds.length === 0) {
                 showError('请至少添加一个门店ID');
                 return;
             }
 
-            const platform = parseInt(document.querySelector('input[name="platform"]:checked').value);
-            const reviewPlatform = parseInt(document.querySelector('input[name="reviewPlatform"]:checked').value);
+            // 获取下拉框的值
+            const platformSelect = document.querySelector('#platformSelect .select-value');
+            const reviewPlatformSelect = document.querySelector('#reviewPlatformSelect .select-value');
+            const dateScopeSelect = document.querySelector('#dateScopeSelect .select-value');
+
+            const platform = parseInt(platformSelect.dataset.value);
+            const reviewPlatform = parseInt(reviewPlatformSelect.dataset.value);
+            const dateScope = parseInt(dateScopeSelect.dataset.value);
+
             const dateRange = document.querySelector('input[name="dateRange"]:checked').value;
 
             let beginDate, endDate;
@@ -794,33 +1629,29 @@
                 beginDate = dates.begin;
                 endDate = dates.end;
             } else {
-                endDate = new Date().toISOString().split('T')[0];
+                endDate = getDateDaysAgo(1);
                 beginDate = getDateDaysAgo(parseInt(dateRange));
             }
 
-            // 显示加载状态
             document.getElementById('loading').classList.add('show');
             document.getElementById('errorMsg').classList.remove('show');
             document.getElementById('successMsg').classList.remove('show');
             document.getElementById('submitBtn').disabled = true;
 
-            // 保存参数用于下载
             window.currentConfig = {
-                "门店列表": shopIds,
+                "门店列表": allIds,
                 "平台": platform,
-                "门店评论平台": reviewPlatform,
-                "日期范围": {
-                    "begin": beginDate,
-                    "end": endDate
-                }
+                "评论统计平台": reviewPlatform,
+                "评论统计日期范围": dateScope,
+                "日期范围": { "begin": beginDate, "end": endDate }
             };
+            window.currentApi = '/api/summary/generate';
+            window.currentFilename = `美团经营宝汇总_${allIds.length > 1 ? '多门店' : allIds[0]}_${beginDate}_${endDate}.xlsx`;
 
             try {
                 const response = await fetch('/api/summary/generate', {
                     method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json'
-                    },
+                    headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify(window.currentConfig)
                 });
 
@@ -839,9 +1670,90 @@
             }
         });
 
-        // 下载按钮
+        // 门店评论表单提交
+        document.getElementById('shopReviewForm').addEventListener('submit', async function(e) {
+            e.preventDefault();
+
+            // 收集手动输入的门店ID
+            const manualShopInputs = document.querySelectorAll('#manualShopListReview .shop-input');
+            const manualIds = [];
+            for (const input of manualShopInputs) {
+                const val = input.value.trim();
+                if (val) {
+                    manualIds.push(val);
+                }
+            }
+
+            // 从门店选择器获取已选门店
+            const selectorIds = Array.from(selectedShopsReview.keys());
+
+            // 合并并去重
+            const allIds = [...new Set([...manualIds, ...selectorIds])];
+
+            if (allIds.length === 0) {
+                showError('请至少添加一个门店ID');
+                return;
+            }
+
+            // 获取下拉框的值
+            const platformSelect = document.querySelector('#reviewPlatformSelectReview .select-value');
+            const platform = parseInt(platformSelect.dataset.value);
+
+            const dateRange = document.querySelector('input[name="dateRangeReview"]:checked').value;
+
+            let beginDate, endDate;
+            if (dateRange === 'custom') {
+                if (!dateRangePickerReview.isValid()) {
+                    showError('请选择完整的日期范围');
+                    return;
+                }
+                const dates = dateRangePickerReview.getValue();
+                beginDate = dates.begin;
+                endDate = dates.end;
+            } else {
+                endDate = getDateDaysAgo(1);
+                beginDate = getDateDaysAgo(parseInt(dateRange));
+            }
+
+            document.getElementById('loading').classList.add('show');
+            document.getElementById('errorMsg').classList.remove('show');
+            document.getElementById('successMsg').classList.remove('show');
+            document.getElementById('submitBtnReview').disabled = true;
+
+            const config = {
+                "门店列表": allIds,
+                "平台": platform,
+                "日期范围": { "begin": beginDate, "end": endDate }
+            };
+
+            window.currentConfig = config;
+            window.currentApi = '/api/shop_review/generate';
+            window.currentFilename = `门店评论_${allIds.length > 1 ? '多门店' : allIds[0]}_${beginDate}_${endDate}.xlsx`;
+
+            try {
+                const response = await fetch('/api/shop_review/generate', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(config)
+                });
+
+                if (response.ok) {
+                    document.getElementById('loading').classList.remove('show');
+                    document.getElementById('successMsg').classList.add('show');
+                } else {
+                    const data = await response.json();
+                    showError(data.message || '生成失败');
+                }
+            } catch (error) {
+                showError('网络请求失败: ' + error.message);
+            } finally {
+                document.getElementById('loading').classList.remove('show');
+                document.getElementById('submitBtnReview').disabled = false;
+            }
+        });
+
         document.getElementById('downloadBtn').addEventListener('click', async function() {
-            if (!window.currentConfig) {
+            if (!window.currentConfig || !window.currentApi) {
                 showError('请先生成报表');
                 return;
             }
@@ -851,11 +1763,9 @@
             btn.textContent = '下载中...';
 
             try {
-                const response = await fetch('/api/summary/generate', {
+                const response = await fetch(window.currentApi, {
                     method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json'
-                    },
+                    headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify(window.currentConfig)
                 });
 
@@ -864,12 +1774,7 @@
                     const url = window.URL.createObjectURL(blob);
                     const a = document.createElement('a');
                     a.href = url;
-
-                    const config = window.currentConfig;
-                    const shopLabel = config['门店列表'].length > 1 ? '多门店' : config['门店列表'][0];
-                    const filename = `美团经营宝汇总_${shopLabel}_${config['日期范围'].begin}_${config['日期范围'].end}.xlsx`;
-
-                    a.download = filename;
+                    a.download = window.currentFilename;
                     document.body.appendChild(a);
                     a.click();
                     window.URL.revokeObjectURL(url);
@@ -893,6 +1798,503 @@
             errorEl.textContent = message;
             errorEl.classList.add('show');
         }
+
+        // ========== 门店评论页面的门店选择器 ==========
+        let cityDataReview = null;           // 省份-城市数据
+        let shopDataReview = null;           // 门店数据
+        let selectedProvincesReview = new Set();   // 已选省份ID
+        let allProvincesSelectedReview = true;     // 是否选中"全部省份"
+        let selectedCitiesReview = new Set();      // 已选城市ID
+        let allCitiesSelectedReview = true;        // 是否选中"全部城市"
+        let currentAllCitiesReview = [];          // 当前显示的城市列表
+        let selectedShopsReview = new Map();       // 已选门店ID -> 门店信息
+        let allFilteredShopsReview = [];           // 当前过滤后的全部门店
+        let displayedShopCountReview = 0;          // 当前已加载的门店数
+        const SHOP_PAGE_SIZE_REVIEW = 100;          // 每页加载门店数
+
+        function initReviewShopSelector() {
+            // selectedShopsReview 已在全局初始化
+        }
+
+        function toggleShopDropdownReview() {
+            const dropdown = document.getElementById('shopDropdownReview');
+            const trigger = document.getElementById('shopTriggerReview');
+            dropdown.classList.toggle('show');
+            trigger.classList.toggle('active');
+
+            if (dropdown.classList.contains('show')) {
+                loadCityDataReview();
+            }
+        }
+
+        async function loadCityDataReview() {
+            try {
+                const response = await fetch('tuiguangtong/city_selector.json');
+                cityDataReview = await response.json();
+                window.cityDataReview = cityDataReview;
+                renderProvinceListReview();
+                renderCityListReview();
+
+                // 加载门店数据
+                if (!shopDataReview) {
+                    const shopResponse = await fetch('tuiguangtong/shop_mapping.json');
+                    shopDataReview = await shopResponse.json();
+                    window.shopDataReview = shopDataReview;
+                }
+                filterAndLoadShopsReview();
+            } catch (error) {
+                console.error('加载数据失败:', error);
+            }
+        }
+
+        function renderProvinceListReview() {
+            const provinceList = document.getElementById('provinceListReview');
+            provinceList.innerHTML = '';
+
+            if (!cityDataReview || !cityDataReview.provinces) return;
+
+            // 全选按钮
+            const allDiv = document.createElement('div');
+            allDiv.className = 'province-item';
+            allDiv.innerHTML = `
+                <div class="shop-checkbox ${allProvincesSelectedReview ? 'checked' : ''}">${allProvincesSelectedReview ? '✓' : ''}</div>
+                <span style="font-weight:500">全部</span>
+            `;
+            allDiv.addEventListener('click', (e) => { e.stopPropagation(); toggleAllProvincesReview(); });
+            provinceList.appendChild(allDiv);
+
+            cityDataReview.provinces.forEach(province => {
+                const div = document.createElement('div');
+                div.className = 'province-item';
+                const isSelected = selectedProvincesReview.has(province.provinceId);
+                const cityCount = province.cities ? province.cities.length : 0;
+
+                div.innerHTML = `
+                    <div class="shop-checkbox ${isSelected ? 'checked' : ''}">${isSelected ? '✓' : ''}</div>
+                    <span>${province.provinceName}</span>
+                    ${isSelected ? `<span style="color:#999;font-size:12px">(${cityCount})</span>` : ''}
+                `;
+
+                div.addEventListener('click', (e) => { e.stopPropagation(); toggleProvinceReview(province); });
+                provinceList.appendChild(div);
+            });
+        }
+
+        function toggleAllProvincesReview() {
+            if (allProvincesSelectedReview) {
+                allProvincesSelectedReview = false;
+                selectedProvincesReview.clear();
+            } else {
+                allProvincesSelectedReview = true;
+                selectedProvincesReview.clear();
+                cityDataReview.provinces.forEach(p => selectedProvincesReview.add(p.provinceId));
+            }
+            allCitiesSelectedReview = true;
+            selectedCitiesReview.clear();
+            renderProvinceListReview();
+            renderCityListReview();
+            filterAndLoadShopsReview();
+            updateShopUIReview();
+        }
+
+        function toggleProvinceReview(province) {
+            if (selectedProvincesReview.has(province.provinceId)) {
+                selectedProvincesReview.delete(province.provinceId);
+                allProvincesSelectedReview = false;
+                if (province.cities) {
+                    province.cities.forEach(c => selectedCitiesReview.delete(c.cityId));
+                }
+            } else {
+                selectedProvincesReview.add(province.provinceId);
+                if (province.cities) {
+                    province.cities.forEach(c => selectedCitiesReview.add(c.cityId));
+                }
+                if (selectedProvincesReview.size === cityDataReview.provinces.length) {
+                    allProvincesSelectedReview = true;
+                }
+            }
+            allCitiesSelectedReview = true;
+            selectedCitiesReview.clear();
+            renderProvinceListReview();
+            renderCityListReview();
+            filterAndLoadShopsReview();
+            updateShopUIReview();
+        }
+
+        function renderCityListReview() {
+            const cityColTitle = document.getElementById('cityColTitleReview');
+            const cityList = document.getElementById('cityListReview');
+
+            currentAllCitiesReview = [];
+            cityDataReview.provinces.forEach(p => {
+                if ((allProvincesSelectedReview || selectedProvincesReview.size === 0 || selectedProvincesReview.has(p.provinceId)) && p.cities) {
+                    currentAllCitiesReview.push(...p.cities);
+                }
+            });
+
+            if (currentAllCitiesReview.length === 0) {
+                cityColTitle.textContent = '暂无论城市';
+                cityList.innerHTML = '<div style="padding:16px;color:#999;text-align:center;">暂无论城市</div>';
+                return;
+            }
+
+            cityColTitle.textContent = allProvincesSelectedReview ? '全部省份' : `已选 ${selectedProvincesReview.size} 个省份`;
+            cityList.innerHTML = '';
+
+            // 全选按钮
+            const allDiv = document.createElement('div');
+            allDiv.className = 'shop-item';
+            allDiv.innerHTML = `
+                <div class="shop-checkbox ${allCitiesSelectedReview ? 'checked' : ''}">${allCitiesSelectedReview ? '✓' : ''}</div>
+                <span style="font-weight:500">全部</span>
+            `;
+            allDiv.addEventListener('click', (e) => { e.stopPropagation(); toggleAllCitiesReview(); });
+            cityList.appendChild(allDiv);
+
+            currentAllCitiesReview.forEach(city => {
+                const div = document.createElement('div');
+                div.className = 'shop-item';
+                const isSelected = selectedCitiesReview.has(city.cityId);
+                if (isSelected) div.classList.add('selected');
+
+                div.innerHTML = `
+                    <div class="shop-checkbox ${isSelected ? 'checked' : ''}">${isSelected ? '✓' : ''}</div>
+                    <span>${city.cityName}</span>
+                `;
+
+                div.addEventListener('click', (e) => { e.stopPropagation(); toggleCityReview(city); });
+                cityList.appendChild(div);
+            });
+        }
+
+        function toggleAllCitiesReview() {
+            if (allCitiesSelectedReview) {
+                allCitiesSelectedReview = false;
+                selectedCitiesReview.clear();
+            } else {
+                allCitiesSelectedReview = true;
+                selectedCitiesReview.clear();
+                currentAllCitiesReview.forEach(c => selectedCitiesReview.add(c.cityId));
+            }
+            renderCityListReview();
+            filterAndLoadShopsReview();
+            updateShopUIReview();
+        }
+
+        function toggleCityReview(city) {
+            if (selectedCitiesReview.has(city.cityId)) {
+                selectedCitiesReview.delete(city.cityId);
+                allCitiesSelectedReview = false;
+            } else {
+                selectedCitiesReview.add(city.cityId);
+                if (selectedCitiesReview.size === currentAllCitiesReview.length) {
+                    allCitiesSelectedReview = true;
+                }
+            }
+            renderCityListReview();
+            filterAndLoadShopsReview();
+            updateShopUIReview();
+        }
+
+        function filterAndLoadShopsReview() {
+            if (!shopDataReview || !shopDataReview.shops) return;
+
+            const searchKeyword = document.getElementById('shopSearchInputReview').value.trim().toLowerCase();
+
+            const selectedCityNames = new Set();
+            cityDataReview.provinces.forEach(p => {
+                if (!allProvincesSelectedReview && selectedProvincesReview.size > 0 && !selectedProvincesReview.has(p.provinceId)) return;
+                if (p.cities) {
+                    p.cities.forEach(c => {
+                        if ((allProvincesSelectedReview || selectedProvincesReview.size === 0) && (allCitiesSelectedReview || selectedCitiesReview.has(c.cityId))) {
+                            selectedCityNames.add(c.cityName);
+                        } else if (selectedProvincesReview.has(p.provinceId) && (allCitiesSelectedReview || selectedCitiesReview.has(c.cityId))) {
+                            selectedCityNames.add(c.cityName);
+                        }
+                    });
+                }
+            });
+
+            allFilteredShopsReview = shopDataReview.shops.filter(shop => {
+                if (selectedCityNames.size > 0 && !selectedCityNames.has(shop.city)) {
+                    return false;
+                }
+                if (searchKeyword) {
+                    const nameMatch = shop.name.toLowerCase().includes(searchKeyword);
+                    const idMatch = shop.ids.some(id => id.id.includes(searchKeyword));
+                    return nameMatch || idMatch;
+                }
+                return true;
+            });
+
+            displayedShopCountReview = 0;
+            document.getElementById('shopLoadTipReview').textContent = '加载更多...';
+            renderShopListReview(true);
+        }
+
+        function renderShopListReview(reset = false) {
+            const shopList = document.getElementById('shopListReview');
+            const shopLoadTip = document.getElementById('shopLoadTipReview');
+
+            if (reset) {
+                shopList.innerHTML = '';
+                displayedShopCountReview = 0;
+            }
+
+            const endIndex = Math.min(displayedShopCountReview + SHOP_PAGE_SIZE_REVIEW, allFilteredShopsReview.length);
+            const shopsToRender = allFilteredShopsReview.slice(displayedShopCountReview, endIndex);
+
+            shopsToRender.forEach(shop => {
+                const shopId = shop.ids.find(id => id.type === 'dianping')?.id || shop.ids[0]?.id || '';
+                const isSelected = selectedShopsReview.has(shopId);
+
+                if (!reset && shopList.children.length > 0) {
+                    const existingDiv = shopList.children[shopsToRender.indexOf(shop)];
+                    if (existingDiv) {
+                        const checkbox = existingDiv.querySelector('.shop-checkbox');
+                        if (checkbox) {
+                            checkbox.className = `shop-checkbox ${isSelected ? 'checked' : ''}`;
+                            checkbox.textContent = isSelected ? '✓' : '';
+                        }
+                        if (isSelected) {
+                            existingDiv.classList.add('selected');
+                        } else {
+                            existingDiv.classList.remove('selected');
+                        }
+                    }
+                } else {
+                    const div = document.createElement('div');
+                    div.className = 'shop-item';
+                    if (isSelected) div.classList.add('selected');
+
+                    div.innerHTML = `
+                        <div class="shop-checkbox ${isSelected ? 'checked' : ''}">${isSelected ? '✓' : ''}</div>
+                        <span style="flex:1">${shop.name}</span>
+                        <span style="color:#999;font-size:12px">${shop.city}</span>
+                    `;
+
+                    div.addEventListener('click', (e) => { e.stopPropagation(); toggleShopReview(shop, shopId); });
+                    shopList.appendChild(div);
+                }
+            });
+
+            displayedShopCountReview = endIndex;
+
+            if (displayedShopCountReview >= allFilteredShopsReview.length) {
+                shopLoadTipReview.textContent = '已加载全部';
+                shopLoadTip.style.cursor = 'default';
+            } else {
+                shopLoadTipReview.textContent = `加载更多... (${displayedShopCountReview}/${allFilteredShopsReview.length})`;
+                shopLoadTipReview.style.cursor = 'pointer';
+                shopLoadTipReview.onclick = () => renderShopListReview(false);
+            }
+        }
+
+        function toggleShopReview(shop, shopId) {
+            const shopList = document.getElementById('shopListReview');
+
+            if (selectedShopsReview.has(shopId)) {
+                selectedShopsReview.delete(shopId);
+            } else {
+                selectedShopsReview.set(shopId, { name: shop.name, city: shop.city });
+            }
+
+            // 更新当前显示门店的checkbox状态
+            const checkbox = shopList.querySelector(`.shop-item:nth-child(${allFilteredShopsReview.indexOf(shop) + 1}) .shop-checkbox`);
+            if (checkbox) {
+                const isSelected = selectedShopsReview.has(shopId);
+                checkbox.className = `shop-checkbox ${isSelected ? 'checked' : ''}`;
+                checkbox.textContent = isSelected ? '✓' : '';
+            }
+
+            updateShopUIReview();
+        }
+
+        function updateShopUIReview() {
+            const trigger = document.getElementById('shopTriggerReview');
+            const placeholder = document.getElementById('shopPlaceholderReview');
+
+            trigger.querySelectorAll('.shop-tag, .shop-count, .shop-clear-all').forEach(el => el.remove());
+
+            if (selectedShopsReview.size === 0) {
+                placeholder.style.display = 'block';
+            } else {
+                placeholder.style.display = 'none';
+
+                // 显示前3个门店标签
+                const shopEntries = Array.from(selectedShopsReview.entries());
+                shopEntries.slice(0, 3).forEach(([shopId, info]) => {
+                    const tag = document.createElement('span');
+                    tag.className = 'shop-tag';
+                    tag.innerHTML = `${info.name} <span class="remove" onclick="event.stopPropagation();removeShopReview('${shopId}')">&times;</span>`;
+                    trigger.insertBefore(tag, placeholder);
+                });
+
+                if (shopEntries.length > 3) {
+                    const count = document.createElement('span');
+                    count.className = 'shop-count';
+                    count.textContent = `共 ${shopEntries.length} 个门店`;
+                    trigger.insertBefore(count, placeholder);
+                }
+
+                const clearBtn = document.createElement('button');
+                clearBtn.type = 'button';
+                clearBtn.className = 'shop-clear-all';
+                clearBtn.textContent = '×';
+                clearBtn.title = '清除全部';
+                clearBtn.addEventListener('click', (e) => {
+                    e.stopPropagation();
+                    clearAllShopsReview();
+                });
+                trigger.appendChild(clearBtn);
+            }
+        }
+
+        function removeShopReview(shopId) {
+            selectedShopsReview.delete(shopId);
+            renderShopListReview(false);
+            updateShopUIReview();
+        }
+
+        function clearAllShopsReview() {
+            selectedShopsReview.clear();
+            selectedCitiesReview.clear();
+            selectedProvincesReview.clear();
+            renderProvinceListReview();
+            renderCityListReview();
+            filterAndLoadShopsReview();
+            updateShopUIReview();
+        }
+
+        function onShopSearchReview() {
+            filterAndLoadShopsReview();
+        }
+
+        // 滚动加载更多
+        document.getElementById('shopListWrapperReview').addEventListener('scroll', function() {
+            const wrapper = this;
+            if (wrapper.scrollHeight - wrapper.scrollTop <= wrapper.clientHeight + 50) {
+                if (displayedShopCountReview < allFilteredShopsReview.length) {
+                    renderShopListReview(false);
+                }
+            }
+        });
+
+        // 手动添加/删除门店
+        function addManualShopReview() {
+            const list = document.getElementById('manualShopListReview');
+            const div = document.createElement('div');
+            div.className = 'shop-item';
+            div.innerHTML = '<input type="text" class="shop-input" placeholder="输入门店ID，如：1933643130"><button type="button" class="btn-remove" onclick="removeManualShopReview(this)">&times;</button>';
+            list.appendChild(div);
+        }
+
+        function removeManualShopReview(btn) {
+            btn.parentElement.remove();
+        }
+
+        // ========== 门店映射表 ==========
+        let shopMappingCurrentPage = 1;
+        let shopMappingTotalPages = 1;
+        let shopMappingTotal = 0;
+
+        async function loadShopMapping(page = 1) {
+            const tbody = document.getElementById('shopMappingBody');
+            tbody.innerHTML = '<tr><td colspan="5" class="loading-cell">加载中...</td></tr>';
+
+            try {
+                const response = await fetch(`/api/shops?page=${page}&page_size=100`);
+                const data = await response.json();
+
+                if (data.status !== 'success') {
+                    tbody.innerHTML = `<tr><td colspan="5" class="loading-cell" style="color: #ff4d4f;">${data.message || '加载失败'}</td></tr>`;
+                    return;
+                }
+
+                shopMappingCurrentPage = data.page;
+                shopMappingTotalPages = data.total_pages;
+                shopMappingTotal = data.total;
+
+                // 更新信息
+                document.getElementById('shopMappingInfo').textContent = `共 ${data.total} 家门店`;
+
+                // 渲染表格
+                if (data.shops.length === 0) {
+                    tbody.innerHTML = '<tr><td colspan="5" class="loading-cell">暂无数据</td></tr>';
+                } else {
+                    const startIndex = (data.page - 1) * data.page_size;
+                    tbody.innerHTML = data.shops.map((shop, index) => `
+                        <tr>
+                            <td>${startIndex + index + 1}</td>
+                            <td title="${shop.name}">${shop.name}</td>
+                            <td>${shop.city}</td>
+                            <td>${shop.meituan_id}</td>
+                            <td>${shop.dianping_id}</td>
+                        </tr>
+                    `).join('');
+                }
+
+                // 更新分页控件
+                updateShopMappingPagination();
+
+            } catch (error) {
+                tbody.innerHTML = `<tr><td colspan="5" class="loading-cell" style="color: #ff4d4f;">加载失败: ${error.message}</td></tr>`;
+            }
+        }
+
+        function updateShopMappingPagination() {
+            const prevBtn = document.getElementById('prevPageBtn');
+            const nextBtn = document.getElementById('nextPageBtn');
+            const pageInfo = document.getElementById('pageInfo');
+
+            prevBtn.disabled = shopMappingCurrentPage <= 1;
+            nextBtn.disabled = shopMappingCurrentPage >= shopMappingTotalPages;
+            pageInfo.textContent = `第 ${shopMappingCurrentPage} / ${shopMappingTotalPages} 页`;
+        }
+
+        function changeShopMappingPage(delta) {
+            const newPage = shopMappingCurrentPage + delta;
+            if (newPage >= 1 && newPage <= shopMappingTotalPages) {
+                loadShopMapping(newPage);
+            }
+        }
+
+        async function refreshShopMapping() {
+            const btn = document.getElementById('refreshShopMappingBtn');
+            const loading = document.getElementById('shopMappingLoading');
+            const loadingText = document.getElementById('shopMappingLoadingText');
+
+            btn.disabled = true;
+            loading.style.display = 'flex';
+            loadingText.textContent = '正在更新门店数据...';
+
+            try {
+                const response = await fetch('/api/shops/refresh', { method: 'POST' });
+                const data = await response.json();
+
+                if (data.status === 'success') {
+                    loadingText.textContent = '更新成功！正在重新加载...';
+                    // 重新加载数据
+                    await loadShopMapping(1);
+                } else {
+                    alert('更新失败: ' + (data.message || '未知错误'));
+                }
+            } catch (error) {
+                alert('更新失败: ' + error.message);
+            } finally {
+                btn.disabled = false;
+                loading.style.display = 'none';
+            }
+        }
+
+        // 门店映射表标签页切换时加载数据
+        const originalSwitchTab = switchTab;
+        switchTab = function(tabName) {
+            originalSwitchTab(tabName);
+            if (tabName === 'shopMapping') {
+                loadShopMapping(shopMappingCurrentPage);
+            }
+        };
     </script>
 </body>
 </html>

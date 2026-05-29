@@ -45,7 +45,8 @@ HEADER_FONT = Font(name="微软雅黑", bold=True, size=10)
 DATA_FONT = Font(name="微软雅黑", size=10)
 
 TITLE_FILL = PatternFill(start_color="FFFBE5D5", end_color="FFFBE5D5", fill_type="solid")
-HEADER_FILL = PatternFill(start_color="E8E8E8", end_color="E8E8E8", fill_type="solid")
+COMPETE_FILL = PatternFill(start_color="FFE3F2D9", end_color="FFE3F2D9", fill_type="solid")
+HEADER_FILL = PatternFill(start_color="FFE8E8E8", end_color="FFE8E8E8", fill_type="solid")
 WHITE_FILL = PatternFill(start_color="FFFFFF", end_color="FFFFFF", fill_type="solid")
 
 CENTER_ALIGN = Alignment(horizontal="center", vertical="center")
@@ -67,15 +68,21 @@ class ExcelGenerator:
 
     def _create_title_row(self, title: str = "推广通报表"):
         """创建标题行（第1行）"""
-        headers = self._get_headers()
-        last_col = get_column_letter(len(headers))
-        self.ws.merge_cells(f"A1:{last_col}1")
+        self.ws.merge_cells("A1:R1")
         title_cell = self.ws["A1"]
-        title_cell.value = title
+        title_cell.value = "推广通报表"
         title_cell.font = TITLE_FONT
         title_cell.fill = TITLE_FILL
         title_cell.alignment = CENTER_ALIGN
-        self.ws.row_dimensions[1].height = 28
+
+        self.ws.merge_cells("S1:V1")
+        compete_cell = self.ws["S1"]
+        compete_cell.value = "竞争分析"
+        compete_cell.font = TITLE_FONT
+        compete_cell.fill = COMPETE_FILL
+        compete_cell.alignment = CENTER_ALIGN
+
+        self.ws.row_dimensions[1].height = 21
 
     def _create_header_row(self):
         """创建表头行（第2行）"""
@@ -90,14 +97,16 @@ class ExcelGenerator:
             cell.border = THIN_BORDER
             self.ws.column_dimensions[get_column_letter(col_idx)].width = width
 
-        self.ws.row_dimensions[2].height = 22
+        self.ws.row_dimensions[2].height = 16.5
 
     def _get_headers(self):
         """获取表头列表"""
         return [
             "门店ID",
             "门店名称",
+            "门店所在城市",
             "时间",
+            "投放周期(天)",
             "花费(元)",
             "现金花费(元)",
             "曝光(次)",
@@ -111,11 +120,15 @@ class ExcelGenerator:
             "感兴趣(次)",
             "团购订单量(个)",
             "订单量(个)",
+            "排名",
+            "本店浏览量",
+            "同行均值",
+            "对比同行均值",
         ]
 
     def _get_widths(self):
         """获取列宽列表"""
-        return [15, 28, 25, 12, 12, 12, 10, 12, 14, 12, 12, 14, 12, 12, 14, 12]
+        return [23.0, 27.875, 13.0, 23.375, 13.0, 7.5, 10.875, 7.5, 13.0, 10.875, 12.625, 10.875, 13.0, 14.5, 10.875, 9.125, 12.625, 9.125, 9.0, 10.5, 13.0, 12.375]
 
     def _get_metric_value_float(self, metrics: list, metric_id: str) -> float:
         """从指标列表中获取指定指标的值（转换为浮点数）"""
@@ -150,15 +163,27 @@ class ExcelGenerator:
             return f"{cost / clicks:.2f}"
         return "0.00"
 
-    def add_data_row(self, shop_id: str, shop_name: str, date_range: str, metrics: list):
+    def add_data_row(
+        self,
+        shop_id: str,
+        shop_name: str,
+        city: str,
+        date_range: str,
+        investment_days: int,
+        metrics: list,
+        competition: dict,
+    ):
         """
         添加一行数据
 
         Args:
             shop_id: 门店ID
             shop_name: 门店名称
+            city: 门店所在城市
             date_range: 时间范围
+            investment_days: 投放周期（有花费的天数）
             metrics: 指标列表
+            competition: 竞争分析数据 {"rank": ..., "shopPv": ..., "peerAvgPv": ..., "peerLevel": ...}
         """
         cost = self._get_metric_value_float(metrics, "T30001")
         cash_cost = self._get_metric_value_float(metrics, "T30047")
@@ -177,7 +202,9 @@ class ExcelGenerator:
         row_data = [
             shop_id,
             shop_name,
+            city,
             date_range,
+            investment_days,
             f"{cost:.2f}",
             f"{cash_cost:.2f}",
             str(int(exposure)),
@@ -191,6 +218,10 @@ class ExcelGenerator:
             str(int(interested)),
             str(int(group_orders)),
             str(int(orders)),
+            competition.get("rank", ""),
+            competition.get("shopPv", ""),
+            competition.get("peerAvgPv", ""),
+            competition.get("peerLevel", ""),
         ]
 
         row_idx = self.ws.max_row + 1
@@ -202,7 +233,7 @@ class ExcelGenerator:
             cell.border = THIN_BORDER
             cell.alignment = CENTER_ALIGN
 
-        self.ws.row_dimensions[row_idx].height = 18
+        self.ws.row_dimensions[row_idx].height = 16.5
 
     def save(self, filepath: str):
         """保存Excel文件"""
@@ -229,14 +260,15 @@ def generate_report(client, shop_ids: list, begin_date: str, end_date: str, plat
     mapping_data = load_mapping()
     shops = mapping_data.get("shops", [])
 
-    def get_shop_name(shop_id: str) -> str:
+    def get_shop_info(shop_id: str) -> tuple:
+        """获取门店名称和城市"""
         if shop_id == "0":
-            return "全部门店汇总数据"
+            return "全部门店汇总数据", ""
         for shop in shops:
             for id_info in shop.get("ids", []):
                 if id_info.get("id") == shop_id:
-                    return shop.get("name", f"门店{shop_id}")
-        return f"门店{shop_id}"
+                    return shop.get("name", f"门店{shop_id}"), shop.get("city", "")
+        return f"门店{shop_id}", ""
 
     generator = ExcelGenerator()
 
@@ -254,16 +286,27 @@ def generate_report(client, shop_ids: list, begin_date: str, end_date: str, plat
 
     # 遍历每个门店查询数据
     for shop_id in shop_ids:
-        shop_name = get_shop_name(shop_id)
+        shop_name, city = get_shop_info(shop_id)
         print(f"  查询门店: {shop_name}...")
 
         try:
+            # 获取指标数据
             metrics = client.get_metrics(begin_date, end_date, shop_id, platform)
-            generator.add_data_row(shop_id, shop_name, date_range, metrics)
-            print(f"    {shop_name}: 获取成功")
+
+            # 计算投放周期
+            investment_days = client.calculate_investment_days(begin_date, end_date, shop_id, platform)
+
+            # 获取竞争分析数据
+            competition = client.get_competition_analysis(begin_date, end_date, shop_id)
+
+            generator.add_data_row(
+                shop_id, shop_name, city, date_range, investment_days, metrics, competition
+            )
+            print(f"    {shop_name}: 获取成功 (投放周期: {investment_days}天)")
+
         except Exception as e:
             print(f"    {shop_name}: 获取失败 - {e}")
-            generator.add_data_row(shop_id, shop_name, date_range, [])
+            generator.add_data_row(shop_id, shop_name, city, date_range, 0, [], {})
 
     # 保存文件
     output_dir = os.path.join(_CURRENT_DIR, "reports")
