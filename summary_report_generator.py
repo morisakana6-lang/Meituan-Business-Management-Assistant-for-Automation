@@ -354,9 +354,13 @@ def generate_tuiguangtong_summary(shop_ids: list, begin_date: str, end_date: str
             print("成功")
             success_count += 1
         except Exception as e:
-            print(f"失败 - {e}")
-            generator.add_data_row(shop_id, shop_name, city, date_range, 0, [], {})
-            fail_count += 1
+            error_msg = str(e)
+            if "noRightsShop" in error_msg:
+                print(f"无权限访问，已跳过")
+            else:
+                print(f"失败 - {e}")
+                generator.add_data_row(shop_id, shop_name, city, date_range, 0, [], {})
+                fail_count += 1
 
     return generator, success_count, fail_count
 
@@ -580,9 +584,13 @@ def generate_customer_flow_summary(shop_ids: list, begin_date: str, end_date: st
             print("成功")
             success_count += 1
         except Exception as e:
-            print(f"失败 - {e}")
-            generator.add_data_row(shop_id, shop_name, city, date_range, {}, {}, {}, {}, {}, {})
-            fail_count += 1
+            error_msg = str(e)
+            if "noRightsShop" in error_msg:
+                print(f"无权限访问，已跳过")
+            else:
+                print(f"失败 - {e}")
+                generator.add_data_row(shop_id, shop_name, city, date_range, {}, {}, {}, {}, {}, {})
+                fail_count += 1
 
     return generator, success_count, fail_count
 
@@ -616,9 +624,13 @@ def generate_quantianzhan_summary(shop_ids: list, begin_date: str, end_date: str
             print("成功")
             success_count += 1
         except Exception as e:
-            print(f"失败 - {e}")
-            generator.add_data_row(shop_id, shop_name, city, date_range, 0, [])
-            fail_count += 1
+            error_msg = str(e)
+            if "noRightsShop" in error_msg:
+                print(f"无权限访问，已跳过")
+            else:
+                print(f"失败 - {e}")
+                generator.add_data_row(shop_id, shop_name, city, date_range, 0, [])
+                fail_count += 1
 
     return generator, success_count, fail_count
 
@@ -660,9 +672,13 @@ def generate_simple_board_summary(shop_ids: list, begin_date: str, end_date: str
             print("成功")
             success_count += 1
         except Exception as e:
-            print(f"失败 - {e}")
-            generator.add_data_row(shop_id, shop_name, city, date_range, {}, "美团", "近7天", {})
-            fail_count += 1
+            error_msg = str(e)
+            if "noRightsShop" in error_msg:
+                print(f"无权限访问，已跳过")
+            else:
+                print(f"失败 - {e}")
+                generator.add_data_row(shop_id, shop_name, city, date_range, {}, "美团", "近7天", {})
+                fail_count += 1
 
     return generator, success_count, fail_count
 
